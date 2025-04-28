@@ -1,24 +1,66 @@
-# exercise-rx-ai-web
+# 基于多模态大模型的个性化处方生成系统
 
-## Project setup
+这是一个基于 Vue.js 3 开发的医疗健康领域的前端应用程序，主要功能是利用多模态大模型生成个性化处方。
+
+## 功能特点
+
+- 用户认证：登录和注册功能
+- 聊天界面：与大模型进行实时对话，支持文本、图片和文件上传
+- 视频解析：上传视频并获取大模型对视频内容的分析结果
+
+## 技术栈
+
+- Vue 3.2.13
+- Vue Router 4.x
+- Pinia 状态管理
+- Element Plus UI 组件库
+- Axios HTTP 客户端
+- SCSS 样式预处理
+
+## 项目设置
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
+### 开发环境编译和热更新
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+### 生产环境编译和压缩
 ```
 npm run build
 ```
 
-### Lints and fixes files
+### 代码质量检查和修复
 ```
 npm run lint
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+## 项目结构
+
+```
+src/
+  |-- api/         # API 请求
+  |-- assets/      # 静态资源
+  |-- components/  # 组件
+  |     |-- chat/    # 聊天相关组件
+  |     |-- common/  # 通用组件
+  |     |-- video/   # 视频相关组件
+  |-- router/      # 路由配置
+  |-- store/       # 状态管理
+  |-- utils/       # 工具函数
+  |-- views/       # 页面视图
+  |-- App.vue      # 根组件
+  |-- main.js      # 入口文件
+```
+
+## 主要功能页面
+
+1. 登录/注册页面 - 用户认证
+2. 聊天界面 - 与大模型交互，上传各类资料
+3. 视频解析页面 - 上传视频并获取分析结果
+
+## API 接口
+
+应用程序默认连接到 `http://localhost:3000` 的后端服务，可以通过设置环境变量 `VUE_APP_API_URL` 来更改。

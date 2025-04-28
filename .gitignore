@@ -1,23 +1,102 @@
+# 系统文件
 .DS_Store
-node_modules
-/dist
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
+# 依赖目录
+node_modules/
+/dist/
+/build/
 
-# local env files
-.env.local
-.env.*.local
-
-# Log files
+# 日志文件
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+logs/
+*.log
 
-# Editor directories and files
-.idea
-.vscode
+# 本地环境文件
+.env
+.env.local
+.env.*.local
+.env.development
+.env.test
+.env.production
+
+# 编辑器和IDE文件
+.idea/
+.vscode/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+.project
+.classpath
+.settings/
+*.sublime-workspace
+*.sublime-project
+
+# 测试覆盖率报告
+coverage/
+.nyc_output/
+
+# 打包文件
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# 临时文件
+.tmp/
+.temp/
+.cache/
+tmp/
+temp/
+
+# 前端特定忽略
+.sass-cache/
+/public/hot/
+/public/storage/
+
+# 后端特定忽略（如果需要）
+# Java
+*.class
+*.jar
+*.war
+*.ear
+target/
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Node.js 后端
+data/
+/uploads/
+
+# 自定义忽略（可按需添加）
+# /path/to/specific/file.ext
