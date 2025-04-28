@@ -2,23 +2,30 @@
   <div class="user-center-container">
     <div class="user-center-header">
       <div class="header-left">
-        <el-button type="text" @click="goBack">
+        <el-button type="text" @click="goBack" class="back-button">
           <el-icon><Back /></el-icon>
           返回
         </el-button>
-        <h2>用户中心</h2>
+        <h2><el-icon><User /></el-icon> 用户中心</h2>
       </div>
       <div class="header-right">
         <el-dropdown trigger="click" @command="handleCommand">
           <span class="user-dropdown">
+            <el-avatar :size="32" class="user-avatar">{{ userDetail?.username?.charAt(0)?.toUpperCase() || '用' }}</el-avatar>
             {{ userDetail?.username || '用户' }}
             <el-icon><ArrowDown /></el-icon>
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="chat">智能问诊</el-dropdown-item>
-              <el-dropdown-item command="video">视频解析</el-dropdown-item>
-              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              <el-dropdown-item command="chat">
+                <el-icon><ChatDotRound /></el-icon> 智能问诊
+              </el-dropdown-item>
+              <el-dropdown-item command="video">
+                <el-icon><Film /></el-icon> 视频解析
+              </el-dropdown-item>
+              <el-dropdown-item command="logout" divided>
+                <el-icon><SwitchButton /></el-icon> 退出登录
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -26,14 +33,21 @@
     </div>
 
     <div class="user-center-content">
-      <el-row :gutter="20">
+      <el-row :gutter="24">
         <!-- 左侧用户信息卡片 -->
         <el-col :span="8">
           <el-card class="user-info-card" shadow="hover">
             <div class="user-info-header">
-              <el-avatar :size="80" :src="userDetail?.avatar">
-                {{ userDetail?.username?.charAt(0)?.toUpperCase() }}
-              </el-avatar>
+              <div class="avatar-container">
+                <el-avatar :size="90" :src="userDetail?.avatar" class="user-large-avatar">
+                  {{ userDetail?.username?.charAt(0)?.toUpperCase() || '用' }}
+                </el-avatar>
+                <div class="avatar-edit">
+                  <el-button circle type="primary" class="edit-avatar-btn">
+                    <el-icon><Camera /></el-icon>
+                  </el-button>
+                </div>
+              </div>
               <h3>{{ userDetail?.realName || userDetail?.username }}</h3>
               <p class="join-date">加入时间: {{ formatDate(userDetail?.joinTime) }}</p>
             </div>
@@ -41,20 +55,34 @@
             <el-divider />
             
             <div class="user-info-body">
-              <el-descriptions :column="1" border>
-                <el-descriptions-item label="用户名">{{ userDetail?.username }}</el-descriptions-item>
-                <el-descriptions-item label="真实姓名">{{ userDetail?.realName }}</el-descriptions-item>
-                <el-descriptions-item label="性别">{{ userDetail?.gender }}</el-descriptions-item>
-                <el-descriptions-item label="年龄">{{ userDetail?.age }}</el-descriptions-item>
-                <el-descriptions-item label="手机号">{{ userDetail?.phone }}</el-descriptions-item>
-                <el-descriptions-item label="邮箱">{{ userDetail?.email }}</el-descriptions-item>
-                <el-descriptions-item label="地址">{{ userDetail?.address }}</el-descriptions-item>
+              <el-descriptions :column="1" border class="user-descriptions">
+                <el-descriptions-item label="用户名">
+                  <span class="description-content">{{ userDetail?.username }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="真实姓名">
+                  <span class="description-content">{{ userDetail?.realName || '未设置' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="性别">
+                  <span class="description-content">{{ userDetail?.gender || '未设置' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="年龄">
+                  <span class="description-content">{{ userDetail?.age || '未设置' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="手机号">
+                  <span class="description-content">{{ userDetail?.phone || '未设置' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="邮箱">
+                  <span class="description-content">{{ userDetail?.email || '未设置' }}</span>
+                </el-descriptions-item>
+                <el-descriptions-item label="地址">
+                  <span class="description-content">{{ userDetail?.address || '未设置' }}</span>
+                </el-descriptions-item>
               </el-descriptions>
               
               <div class="action-buttons">
-                <el-button type="primary" @click="openEditDialog">
+                <el-button type="primary" @click="openEditDialog" class="edit-info-btn">
                   <el-icon><Edit /></el-icon>
-                  编辑信息
+                  编辑个人信息
                 </el-button>
               </div>
             </div>
@@ -66,8 +94,11 @@
           <el-card class="medical-records-card" shadow="hover">
             <template #header>
               <div class="card-header">
-                <h3>病历病史管理</h3>
-                <el-button type="primary" @click="showUploadDialog">
+                <div class="card-title">
+                  <el-icon><Notebook /></el-icon>
+                  <h3>病历病史管理</h3>
+                </div>
+                <el-button type="primary" @click="showUploadDialog" class="upload-btn">
                   <el-icon><Upload /></el-icon>
                   上传病历
                 </el-button>
@@ -81,7 +112,12 @@
               
               <div v-else-if="!medicalRecords.length" class="empty-records">
                 <el-empty description="暂无病历记录">
-                  <el-button type="primary" @click="showUploadDialog">上传病历</el-button>
+                  <template #image>
+                    <el-icon class="empty-icon"><DocumentRemove /></el-icon>
+                  </template>
+                  <el-button type="primary" @click="showUploadDialog" class="upload-empty-btn">
+                    <el-icon><Plus /></el-icon> 上传病历
+                  </el-button>
                 </el-empty>
               </div>
               
@@ -91,11 +127,12 @@
                 style="width: 100%"
                 border
                 stripe
+                class="records-table"
               >
                 <el-table-column prop="filename" label="文件名" min-width="180">
                   <template #default="{row}">
                     <div class="file-name-cell">
-                      <el-icon><Document /></el-icon>
+                      <el-icon class="file-icon"><Document /></el-icon>
                       <span>{{ row.filename }}</span>
                     </div>
                   </template>
@@ -116,6 +153,7 @@
                       v-if="row.description && row.description.length > 20"
                       :content="row.description" 
                       placement="top"
+                      effect="light"
                     >
                       <span>{{ row.description.slice(0, 20) }}...</span>
                     </el-tooltip>
@@ -124,21 +162,29 @@
                 </el-table-column>
                 <el-table-column label="操作" width="150">
                   <template #default="{row}">
-                    <el-button 
-                      type="primary" 
-                      link 
-                      @click="showFilePreview(row)"
-                    >
-                      查看
-                    </el-button>
-                    <el-popconfirm
-                      title="确定要删除这条记录吗？"
-                      @confirm="deleteRecord(row.id)"
-                    >
-                      <template #reference>
-                        <el-button type="danger" link>删除</el-button>
-                      </template>
-                    </el-popconfirm>
+                    <div class="action-column">
+                      <el-button 
+                        type="primary" 
+                        link 
+                        @click="showFilePreview(row)"
+                        class="action-btn"
+                      >
+                        <el-icon><View /></el-icon> 查看
+                      </el-button>
+                      <el-popconfirm
+                        title="确定要删除这条记录吗？"
+                        @confirm="deleteRecord(row.id)"
+                        confirm-button-type="danger"
+                        icon="WarningFilled"
+                        icon-color="#F56C6C"
+                      >
+                        <template #reference>
+                          <el-button type="danger" link class="action-btn">
+                            <el-icon><Delete /></el-icon> 删除
+                          </el-button>
+                        </template>
+                      </el-popconfirm>
+                    </div>
                   </template>
                 </el-table-column>
               </el-table>
@@ -153,6 +199,8 @@
       v-model="uploadDialogVisible"
       title="上传病历"
       width="500px"
+      destroy-on-close
+      class="upload-dialog"
     >
       <div class="upload-dialog-content">
         <el-form :model="uploadForm" label-width="80px">
@@ -162,6 +210,7 @@
               type="textarea" 
               :rows="2"
               placeholder="请输入对病历的简要描述"
+              resize="none"
             ></el-input>
           </el-form-item>
           
@@ -176,15 +225,15 @@
               :limit="1"
               :file-list="uploadForm.fileList"
             >
-              <el-icon class="el-icon--upload"><Upload /></el-icon>
-              <div class="el-upload__text">
-                拖拽文件到此处或 <em>点击上传</em>
-              </div>
-              <template #tip>
+              <div class="upload-area-content">
+                <el-icon class="upload-icon"><Upload /></el-icon>
+                <div class="el-upload__text">
+                  拖拽文件到此处或 <em>点击上传</em>
+                </div>
                 <div class="el-upload__tip">
                   支持PDF、JPEG、PNG等常见文件格式，单个文件不超过20MB
                 </div>
-              </template>
+              </div>
             </el-upload>
           </el-form-item>
         </el-form>
@@ -197,8 +246,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="uploadDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitUpload" :loading="uploading">
+          <el-button @click="uploadDialogVisible = false" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="submitUpload" :loading="uploading" class="submit-btn">
             上传
           </el-button>
         </div>
@@ -210,6 +259,8 @@
       v-model="editDialogVisible"
       title="编辑个人信息"
       width="500px"
+      destroy-on-close
+      class="edit-dialog"
     >
       <el-form 
         :model="editForm" 
@@ -243,8 +294,8 @@
       
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="editDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitEdit" :loading="loading">
+          <el-button @click="editDialogVisible = false" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="submitEdit" :loading="loading" class="submit-btn">
             保存
           </el-button>
         </div>
@@ -267,7 +318,12 @@
         </div>
         <div v-else class="unsupported-preview">
           <el-empty description="此文件格式不支持预览">
-            <el-button type="primary" @click="downloadFile(previewFile)">下载文件</el-button>
+            <template #image>
+              <el-icon class="empty-icon"><DocumentDelete /></el-icon>
+            </template>
+            <el-button type="primary" @click="downloadFile(previewFile)" class="download-btn">
+              <el-icon><Download /></el-icon> 下载文件
+            </el-button>
           </el-empty>
         </div>
       </div>
@@ -494,7 +550,12 @@ const isPdfFile = (fileType) => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f5f7fa;
+  background-color: #f9fafc;
+  background-image: 
+    radial-gradient(#e4f0ff 1px, transparent 1px),
+    radial-gradient(#e4f0ff 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
   overflow: hidden;
 }
 
@@ -502,9 +563,10 @@ const isPdfFile = (fileType) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
-  background-color: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 15px 24px;
+  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+  color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   z-index: 10;
   
   .header-left {
@@ -515,7 +577,40 @@ const isPdfFile = (fileType) => {
     h2 {
       margin: 0;
       font-size: 20px;
-      color: #333;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .el-icon {
+        font-size: 22px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        padding: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    }
+
+    .back-button {
+      display: flex;
+      align-items: center;
+      color: white;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      padding: 6px 12px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateX(-2px);
+      }
+
+      .el-icon {
+        margin-right: 4px;
+      }
     }
   }
   
@@ -523,9 +618,23 @@ const isPdfFile = (fileType) => {
     display: flex;
     align-items: center;
     cursor: pointer;
-    gap: 4px;
+    gap: 8px;
     font-size: 14px;
-    color: #606266;
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .user-avatar {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      font-weight: 600;
+    }
   }
 }
 
@@ -537,17 +646,66 @@ const isPdfFile = (fileType) => {
 
 .user-info-card {
   height: 100%;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+  }
   
   .user-info-header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 24px 0;
+    padding: 32px 0;
+    background: linear-gradient(to bottom, #f0f6ff, #ffffff);
+    
+    .avatar-container {
+      position: relative;
+      margin-bottom: 8px;
+
+      .user-large-avatar {
+        background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 36px;
+        box-shadow: 0 6px 16px rgba(38, 126, 255, 0.3);
+        border: 4px solid white;
+      }
+
+      .avatar-edit {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+
+        .edit-avatar-btn {
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          font-size: 14px;
+          background: #267eff;
+          border: 2px solid white;
+          opacity: 0;
+          transform: scale(0.8);
+          transition: all 0.3s ease;
+        }
+      }
+
+      &:hover .edit-avatar-btn {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
     
     h3 {
       margin: 16px 0 0;
-      font-size: 18px;
-      color: #333;
+      font-size: 20px;
+      font-weight: 600;
+      color: #303133;
     }
     
     .join-date {
@@ -558,42 +716,167 @@ const isPdfFile = (fileType) => {
   }
   
   .user-info-body {
-    padding: 0 0 16px;
+    padding: 0 16px 24px;
+    
+    .user-descriptions {
+      margin-top: 16px;
+
+      :deep(.el-descriptions__label) {
+        background-color: #f5f7fa;
+        color: #606266;
+        font-weight: 500;
+      }
+
+      .description-content {
+        color: #303133;
+      }
+    }
     
     .action-buttons {
       margin-top: 24px;
       text-align: center;
+
+      .edit-info-btn {
+        background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+        border: none;
+        border-radius: 10px;
+        padding: 10px 20px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.2);
+
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(38, 126, 255, 0.3);
+        }
+
+        .el-icon {
+          margin-right: 6px;
+        }
+      }
     }
   }
 }
 
 .medical-records-card {
   height: 100%;
+  border-radius: 16px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  
+  &:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+  }
   
   .card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    background: linear-gradient(to right, #f0f4ff, #e6f0ff);
+    padding: 16px;
     
-    h3 {
-      margin: 0;
-      font-size: 18px;
-      color: #333;
+    .card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #303133;
+      }
+
+      .el-icon {
+        font-size: 20px;
+        color: #267eff;
+      }
+    }
+
+    .upload-btn {
+      background: #267eff;
+      border: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
+      }
+
+      .el-icon {
+        margin-right: 4px;
+      }
     }
   }
   
   .medical-records-content {
     min-height: 300px;
+    padding: 16px;
   }
   
   .empty-records {
     padding: 40px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .empty-icon {
+      font-size: 60px;
+      color: #c0c4cc;
+      margin-bottom: 16px;
+    }
+
+    .upload-empty-btn {
+      background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+      border: none;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      margin-top: 16px;
+      
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
+      }
+    }
   }
   
-  .file-name-cell {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  .records-table {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+
+    :deep(.el-table__header-wrapper th) {
+      background-color: #f5f7fa;
+      color: #606266;
+      font-weight: 600;
+    }
+
+    .file-name-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .file-icon {
+        color: #267eff;
+        font-size: 18px;
+      }
+    }
+
+    .action-column {
+      display: flex;
+      justify-content: space-evenly;
+
+      .action-btn {
+        font-size: 13px;
+        .el-icon {
+          margin-right: 2px;
+        }
+      }
+    }
   }
 }
 
@@ -601,14 +884,90 @@ const isPdfFile = (fileType) => {
   padding: 20px 0;
 }
 
+.upload-dialog, .edit-dialog, .preview-dialog {
+  :deep(.el-dialog__header) {
+    padding: 20px;
+    margin: 0;
+    border-bottom: 1px solid #ebeef5;
+    
+    .el-dialog__title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #303133;
+    }
+  }
+
+  :deep(.el-dialog__body) {
+    padding: 24px;
+  }
+
+  :deep(.el-dialog__footer) {
+    padding: 16px 20px;
+    border-top: 1px solid #ebeef5;
+  }
+}
+
 .upload-dialog-content {
+  .upload-area-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+  }
+
+  .upload-icon {
+    font-size: 48px;
+    color: #267eff;
+    margin-bottom: 16px;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+
+  :deep(.el-upload-dragger:hover) .upload-icon {
+    transform: translateY(-8px);
+  }
+
+  :deep(.el-upload-dragger) {
+    width: 100%;
+    height: auto;
+    padding: 24px;
+    border: 2px dashed #dcdfe6;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: rgba(64, 158, 255, 0.02);
+
+    &:hover {
+      border-color: #267eff;
+      background: rgba(64, 158, 255, 0.05);
+      transform: translateY(-2px);
+    }
+  }
+
+  :deep(.el-upload__text) {
+    font-size: 16px;
+    color: #606266;
+    margin-bottom: 8px;
+
+    em {
+      color: #267eff;
+      font-style: normal;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  }
+
+  :deep(.el-upload__tip) {
+    color: #909399;
+    font-size: 13px;
+    text-align: center;
+  }
+
   .upload-progress {
-    margin-top: 16px;
+    margin-top: 24px;
     
     .progress-text {
       margin-top: 8px;
       text-align: center;
-      color: #409EFF;
+      color: #267eff;
       font-size: 14px;
     }
   }
@@ -617,7 +976,22 @@ const isPdfFile = (fileType) => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 12px;
+
+  .cancel-btn {
+    border-radius: 8px;
+  }
+
+  .submit-btn {
+    background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+    border: none;
+    border-radius: 8px;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
+    }
+  }
 }
 
 .preview-dialog {
@@ -631,6 +1005,19 @@ const isPdfFile = (fileType) => {
         max-width: 100%;
         max-height: 600px;
         object-fit: contain;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      }
+    }
+    
+    .pdf-preview {
+      width: 100%;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+
+      iframe {
+        border: none;
       }
     }
     
@@ -640,7 +1027,72 @@ const isPdfFile = (fileType) => {
       display: flex;
       justify-content: center;
       align-items: center;
+
+      .empty-icon {
+        font-size: 60px;
+        color: #c0c4cc;
+      }
+
+      .download-btn {
+        background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+        border: none;
+        border-radius: 8px;
+        margin-top: 16px;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
+        }
+
+        .el-icon {
+          margin-right: 4px;
+        }
+      }
     }
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .user-center-header {
+    padding: 12px 16px;
+    
+    .header-left {
+      gap: 8px;
+      
+      h2 {
+        font-size: 18px;
+      }
+    }
+  }
+
+  .user-center-content {
+    padding: 16px;
+  }
+
+  .el-row {
+    flex-direction: column;
+    
+    .el-col {
+      width: 100%;
+      max-width: 100%;
+      flex: 0 0 100%;
+    }
+  }
+
+  .user-info-card, .medical-records-card {
+    margin-bottom: 16px;
+  }
+
+  .user-info-card .user-info-header {
+    padding: 24px 0;
+  }
+
+  .medical-records-content {
+    min-height: auto;
+  }
+
+  .records-table {
+    white-space: nowrap;
   }
 }
 </style> 

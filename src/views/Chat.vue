@@ -2,20 +2,29 @@
   <div class="chat-container">
     <div class="chat-header">
       <div class="header-left">
-        <h2>智能问诊</h2>
+        <h2><el-icon><ChatDotRound /></el-icon> 智能问诊</h2>
       </div>
       <div class="header-right">
         <el-dropdown trigger="click" @command="handleCommand">
           <span class="user-dropdown">
+            <el-avatar :size="32" class="user-avatar">{{ userInfo?.username?.charAt(0) || '用' }}</el-avatar>
             {{ userInfo?.username || '用户' }}
             <el-icon><ArrowDown /></el-icon>
           </span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="clearChat">清空聊天记录</el-dropdown-item>
-              <el-dropdown-item command="viewVideo">视频解析</el-dropdown-item>
-              <el-dropdown-item command="userCenter">用户中心</el-dropdown-item>
-              <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+              <el-dropdown-item command="clearChat">
+                <el-icon><Delete /></el-icon> 清空聊天记录
+              </el-dropdown-item>
+              <el-dropdown-item command="viewVideo">
+                <el-icon><Film /></el-icon> 视频解析
+              </el-dropdown-item>
+              <el-dropdown-item command="userCenter">
+                <el-icon><User /></el-icon> 用户中心
+              </el-dropdown-item>
+              <el-dropdown-item command="logout" divided>
+                <el-icon><SwitchButton /></el-icon> 退出登录
+              </el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -26,8 +35,11 @@
       <!-- 欢迎消息 -->
       <div v-if="!messages.length" class="welcome-container">
         <div class="welcome-content">
-          <h3>欢迎使用基于多模态大模型的个性化处方生成系统</h3>
-          <p>您可以上传您的病例、医学检查结果等信息，与AI进行对话，获取个性化的处方建议。</p>
+          <div class="welcome-header">
+            <el-icon class="welcome-icon"><ChatDotRound /></el-icon>
+            <h3>欢迎使用基于多模态大模型的个性化处方生成系统</h3>
+          </div>
+          <p class="welcome-description">您可以上传您的病例、医学检查结果等信息，与AI进行对话，获取个性化的处方建议。</p>
           <div class="welcome-tips">
             <el-card class="tip-card">
               <template #header>
@@ -80,7 +92,9 @@
       
       <!-- 加载更多按钮 -->
       <div v-if="hasMoreMessages" class="load-more">
-        <el-button type="text" @click="loadMoreMessages">加载更多消息</el-button>
+        <el-button type="primary" plain size="small" @click="loadMoreMessages">
+          <el-icon><TopLeft /></el-icon> 加载更多消息
+        </el-button>
       </div>
     </div>
     
@@ -235,49 +249,87 @@ export default {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #f9fafc;
 }
 
 .chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 20px;
-  background-color: #409eff;
+  padding: 15px 24px;
+  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
   color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 10;
 }
 
 .header-left h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-left h2 .el-icon {
+  font-size: 22px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .user-dropdown {
   display: flex;
   align-items: center;
+  gap: 8px;
   cursor: pointer;
   color: white;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
 }
 
-.user-dropdown .el-icon {
-  margin-left: 5px;
+.user-dropdown:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.user-avatar {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  font-weight: 600;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
-  background-color: #f5f7fa;
+  padding: 24px;
+  background-color: #f9fafc;
+  background-image: 
+    radial-gradient(#e4f0ff 1px, transparent 1px),
+    radial-gradient(#e4f0ff 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  scroll-behavior: smooth;
 }
 
 .chat-input-area {
-  padding: 15px 20px;
-  background-color: #f5f7fa;
-  border-top: 1px solid #dcdfe6;
+  padding: 16px 24px;
+  background-color: #fff;
+  border-top: 1px solid #ebeef5;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 5;
 }
 
 .load-more {
   text-align: center;
-  margin: 15px 0;
+  margin: 20px 0;
 }
 
 .welcome-container {
@@ -290,50 +342,132 @@ export default {
 }
 
 .welcome-content {
-  max-width: 800px;
-  text-align: center;
+  max-width: 900px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.1);
+  animation: fadeUp 0.8s ease forwards;
+}
+
+.welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.welcome-icon {
+  font-size: 48px;
+  color: #267eff;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
+  color: white;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(38, 126, 255, 0.3);
+  animation: pulse 2s infinite;
 }
 
 .welcome-content h3 {
   font-size: 24px;
   margin-bottom: 16px;
   color: #303133;
+  text-align: center;
+  font-weight: 600;
 }
 
-.welcome-content p {
+.welcome-description {
   color: #606266;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
+  text-align: center;
+  font-size: 16px;
+  line-height: 1.6;
 }
 
 .welcome-tips {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 24px;
   margin-top: 30px;
 }
 
 .tip-card {
   width: 240px;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tip-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
   display: flex;
   align-items: center;
+  background: linear-gradient(to right, #f0f4ff, #e6f0ff);
+  padding: 16px;
 }
 
 .card-header .el-icon {
   margin-right: 8px;
-  color: #409eff;
+  color: #267eff;
+  font-size: 20px;
+}
+
+.card-header span {
+  font-weight: 600;
+  color: #303133;
 }
 
 .card-content {
   color: #606266;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.6;
+  padding: 16px;
+  background: white;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(38, 126, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(38, 126, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(38, 126, 255, 0);
+  }
 }
 
 @media screen and (max-width: 768px) {
+  .welcome-content {
+    padding: 30px 20px;
+  }
+  
   .welcome-tips {
     flex-direction: column;
     align-items: center;
@@ -342,6 +476,22 @@ export default {
   .tip-card {
     width: 100%;
     max-width: 320px;
+  }
+  
+  .chat-header {
+    padding: 12px 16px;
+  }
+  
+  .header-left h2 {
+    font-size: 18px;
+  }
+  
+  .chat-messages {
+    padding: 16px;
+  }
+  
+  .chat-input-area {
+    padding: 12px 16px;
   }
 }
 </style> 
