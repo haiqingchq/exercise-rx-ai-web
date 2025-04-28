@@ -8,6 +8,10 @@ console.log('=== 环境变量信息结束 ===')
 
 module.exports = defineConfig({
   transpileDependencies: true,
+  // 部署应用包时的基本URL，默认是'/'
+  publicPath: '/',
+  // 放置静态资源的目录
+  assetsDir: 'static',
   devServer: {
     proxy: {
       '/api': {
