@@ -19,6 +19,9 @@
               <el-dropdown-item command="viewVideo">
                 <el-icon><Film /></el-icon> 视频解析
               </el-dropdown-item>
+              <el-dropdown-item command="patientInfo">
+                <el-icon><Document /></el-icon> 患者信息管理
+              </el-dropdown-item>
               <el-dropdown-item command="userCenter">
                 <el-icon><User /></el-icon> 用户中心
               </el-dropdown-item>
@@ -213,6 +216,8 @@ export default {
         router.push('/video')
       } else if (command === 'userCenter') {
         router.push('/user-center')
+      } else if (command === 'patientInfo') {
+        router.push('/patient-info')
       }
     }
     

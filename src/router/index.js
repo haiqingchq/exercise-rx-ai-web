@@ -49,6 +49,15 @@ const routes = [
       title: '用户中心',
       requiresAuth: true
     }
+  },
+  {
+    path: '/patient-info',
+    name: 'PatientInfo',
+    component: () => import('../views/PatientInfo.vue'),
+    meta: {
+      title: '患者信息管理',
+      requiresAuth: true
+    }
   }
 ]
 

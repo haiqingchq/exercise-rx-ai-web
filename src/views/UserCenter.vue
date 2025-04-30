@@ -23,6 +23,9 @@
               <el-dropdown-item command="video">
                 <el-icon><Film /></el-icon> 视频解析
               </el-dropdown-item>
+              <el-dropdown-item command="patientInfo">
+                <el-icon><Document /></el-icon> 患者信息管理
+              </el-dropdown-item>
               <el-dropdown-item command="logout" divided>
                 <el-icon><SwitchButton /></el-icon> 退出登录
               </el-dropdown-item>
@@ -408,6 +411,8 @@ const handleCommand = (command) => {
     router.push('/chat')
   } else if (command === 'video') {
     router.push('/video')
+  } else if (command === 'patientInfo') {
+    router.push('/patient-info')
   }
 }
 
