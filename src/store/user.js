@@ -20,7 +20,7 @@ export const useUserStore = defineStore('user', {
       try {
         this.loading = true
         const response = await login(loginData)
-        this.token = response.data.token
+        this.token = response.data.access_token
         localStorage.setItem('token', response.data.token)
         await this.fetchUserInfo()
         ElMessage.success('登录成功')
