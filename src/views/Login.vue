@@ -42,8 +42,8 @@ export default {
     const loading = ref(false)
     
     const loginForm = reactive({
-      username: '',
-      password: ''
+      username: 'admin',
+      password: 'admin123'
     })
     
     const rules = {
