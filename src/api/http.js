@@ -4,7 +4,7 @@ import router from '../router'
 
 // 创建axios实例
 const http = axios.create({
-  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.VUE_APP_API_URL || 'http://localhost:10001/api/backend',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json;charset=utf-8'

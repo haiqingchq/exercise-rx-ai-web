@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', {
         this.loading = true
         const response = await login(loginData)
         this.token = response.data.access_token
-        localStorage.setItem('token', response.data.token)
+        localStorage.setItem('token', this.token)
         await this.fetchUserInfo()
         ElMessage.success('登录成功')
         router.push('/chat')

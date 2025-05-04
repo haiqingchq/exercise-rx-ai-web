@@ -37,8 +37,8 @@
 
     <div class="user-center-content">
       <el-row :gutter="24">
-        <!-- 左侧用户信息卡片 -->
-        <el-col :span="8">
+        <!-- 用户信息卡片 -->
+        <el-col :span="12" :offset="6">
           <el-card class="user-info-card" shadow="hover">
             <div class="user-info-header">
               <div class="avatar-container">
@@ -83,179 +83,20 @@
               </el-descriptions>
               
               <div class="action-buttons">
-                <el-button type="primary" @click="openEditDialog" class="edit-info-btn">
+                <el-button type="primary" @click="openEditDialog" class="action-btn">
                   <el-icon><Edit /></el-icon>
                   编辑个人信息
                 </el-button>
-              </div>
-            </div>
-          </el-card>
-        </el-col>
-        
-        <!-- 右侧病历病史管理 -->
-        <el-col :span="16">
-          <el-card class="medical-records-card" shadow="hover">
-            <template #header>
-              <div class="card-header">
-                <div class="card-title">
-                  <el-icon><Notebook /></el-icon>
-                  <h3>病历病史管理</h3>
-                </div>
-                <el-button type="primary" @click="showUploadDialog" class="upload-btn">
-                  <el-icon><Upload /></el-icon>
-                  上传病历
+                <el-button type="warning" @click="openChangePasswordDialog" class="action-btn">
+                  <el-icon><Lock /></el-icon>
+                  修改密码
                 </el-button>
               </div>
-            </template>
-            
-            <div class="medical-records-content">
-              <div v-if="loading" class="loading-container">
-                <el-skeleton :rows="5" animated />
-              </div>
-              
-              <div v-else-if="!medicalRecords.length" class="empty-records">
-                <el-empty description="暂无病历记录">
-                  <template #image>
-                    <el-icon class="empty-icon"><DocumentRemove /></el-icon>
-                  </template>
-                  <el-button type="primary" @click="showUploadDialog" class="upload-empty-btn">
-                    <el-icon><Plus /></el-icon> 上传病历
-                  </el-button>
-                </el-empty>
-              </div>
-              
-              <el-table
-                v-else
-                :data="sortedMedicalRecords"
-                style="width: 100%"
-                border
-                stripe
-                class="records-table"
-              >
-                <el-table-column prop="filename" label="文件名" min-width="180">
-                  <template #default="{row}">
-                    <div class="file-name-cell">
-                      <el-icon class="file-icon"><Document /></el-icon>
-                      <span>{{ row.filename }}</span>
-                    </div>
-                  </template>
-                </el-table-column>
-                <el-table-column prop="fileSize" label="大小" width="120">
-                  <template #default="{row}">
-                    {{ formatFileSize(row.fileSize) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="uploadTime" label="上传时间" width="180">
-                  <template #default="{row}">
-                    {{ formatDateTime(row.uploadTime) }}
-                  </template>
-                </el-table-column>
-                <el-table-column prop="description" label="描述" min-width="150">
-                  <template #default="{row}">
-                    <el-tooltip 
-                      v-if="row.description && row.description.length > 20"
-                      :content="row.description" 
-                      placement="top"
-                      effect="light"
-                    >
-                      <span>{{ row.description.slice(0, 20) }}...</span>
-                    </el-tooltip>
-                    <span v-else>{{ row.description || '无描述' }}</span>
-                  </template>
-                </el-table-column>
-                <el-table-column label="操作" width="150">
-                  <template #default="{row}">
-                    <div class="action-column">
-                      <el-button 
-                        type="primary" 
-                        link 
-                        @click="showFilePreview(row)"
-                        class="action-btn"
-                      >
-                        <el-icon><View /></el-icon> 查看
-                      </el-button>
-                      <el-popconfirm
-                        title="确定要删除这条记录吗？"
-                        @confirm="deleteRecord(row.id)"
-                        confirm-button-type="danger"
-                        icon="WarningFilled"
-                        icon-color="#F56C6C"
-                      >
-                        <template #reference>
-                          <el-button type="danger" link class="action-btn">
-                            <el-icon><Delete /></el-icon> 删除
-                          </el-button>
-                        </template>
-                      </el-popconfirm>
-                    </div>
-                  </template>
-                </el-table-column>
-              </el-table>
             </div>
           </el-card>
         </el-col>
       </el-row>
     </div>
-    
-    <!-- 上传病历对话框 -->
-    <el-dialog
-      v-model="uploadDialogVisible"
-      title="上传病历"
-      width="500px"
-      destroy-on-close
-      class="upload-dialog"
-    >
-      <div class="upload-dialog-content">
-        <el-form :model="uploadForm" label-width="80px">
-          <el-form-item label="文件描述">
-            <el-input 
-              v-model="uploadForm.description" 
-              type="textarea" 
-              :rows="2"
-              placeholder="请输入对病历的简要描述"
-              resize="none"
-            ></el-input>
-          </el-form-item>
-          
-          <el-form-item label="病历文件">
-            <el-upload
-              class="record-uploader"
-              drag
-              action="#"
-              :auto-upload="false"
-              :on-change="handleFileChange"
-              :multiple="false"
-              :limit="1"
-              :file-list="uploadForm.fileList"
-            >
-              <div class="upload-area-content">
-                <el-icon class="upload-icon"><Upload /></el-icon>
-                <div class="el-upload__text">
-                  拖拽文件到此处或 <em>点击上传</em>
-                </div>
-                <div class="el-upload__tip">
-                  支持PDF、JPEG、PNG等常见文件格式，单个文件不超过20MB
-                </div>
-              </div>
-            </el-upload>
-          </el-form-item>
-        </el-form>
-        
-        <div v-if="uploading" class="upload-progress">
-          <el-progress :percentage="uploadProgress" :status="uploadProgress === 100 ? 'success' : ''" />
-          <div class="progress-text">上传中 {{ uploadProgress }}%</div>
-        </div>
-      </div>
-      
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="uploadDialogVisible = false" class="cancel-btn">取消</el-button>
-          <el-button type="primary" @click="submitUpload" :loading="uploading" class="submit-btn">
-            上传
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
     
     <!-- 编辑用户信息对话框 -->
     <el-dialog
@@ -305,31 +146,97 @@
       </template>
     </el-dialog>
     
-    <!-- 文件预览对话框 -->
+    <!-- 修改密码对话框 -->
     <el-dialog
-      v-model="previewDialogVisible"
-      :title="previewFile?.filename"
-      width="70%"
-      class="preview-dialog"
+      v-model="changePasswordVisible"
+      title="修改密码"
+      width="500px"
+      destroy-on-close
+      class="password-dialog"
     >
-      <div class="file-preview-container">
-        <div v-if="isImageFile(previewFile?.fileType)" class="image-preview">
-          <img :src="previewFile?.url" :alt="previewFile?.filename" />
+      <el-form 
+        :model="passwordForm" 
+        :rules="passwordRules" 
+        ref="passwordFormRef" 
+        label-width="100px"
+      >
+        <el-form-item label="当前密码" prop="currentPassword">
+          <el-input 
+            v-model="passwordForm.currentPassword" 
+            type="password" 
+            placeholder="请输入当前密码"
+            show-password
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input 
+            v-model="passwordForm.newPassword" 
+            type="password" 
+            placeholder="请输入新密码"
+            show-password
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-input 
+            v-model="passwordForm.confirmPassword" 
+            type="password" 
+            placeholder="请再次输入新密码"
+            show-password
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="changePasswordVisible = false" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="submitChangePassword" :loading="loading" class="submit-btn">
+            确认修改
+          </el-button>
         </div>
-        <div v-else-if="isPdfFile(previewFile?.fileType)" class="pdf-preview">
-          <iframe :src="previewFile?.url" width="100%" height="500"></iframe>
-        </div>
-        <div v-else class="unsupported-preview">
-          <el-empty description="此文件格式不支持预览">
-            <template #image>
-              <el-icon class="empty-icon"><DocumentDelete /></el-icon>
-            </template>
-            <el-button type="primary" @click="downloadFile(previewFile)" class="download-btn">
-              <el-icon><Download /></el-icon> 下载文件
-            </el-button>
-          </el-empty>
-        </div>
+      </template>
+    </el-dialog>
+    
+    <!-- 二次验证对话框 -->
+    <el-dialog
+      v-model="verificationVisible"
+      title="安全验证"
+      width="400px"
+      destroy-on-close
+      class="verification-dialog"
+    >
+      <div class="verification-content">
+        <p class="verification-tip">为了保障您的账户安全，请进行安全验证</p>
+        <el-form 
+          :model="verificationForm" 
+          :rules="verificationRules" 
+          ref="verificationFormRef" 
+          label-width="0"
+        >
+          <el-form-item prop="code">
+            <el-input 
+              v-model="verificationForm.code" 
+              placeholder="请输入验证码"
+              maxlength="6"
+              class="verification-input"
+            >
+              <template #append>
+                <el-button type="primary" :disabled="cooldown > 0" @click="sendVerificationCode">
+                  {{ cooldown > 0 ? `${cooldown}秒后重试` : '获取验证码' }}
+                </el-button>
+              </template>
+            </el-input>
+          </el-form-item>
+        </el-form>
       </div>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="cancelVerification" class="cancel-btn">取消</el-button>
+          <el-button type="primary" @click="confirmVerification" :loading="loading" class="submit-btn">
+            验证
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -347,19 +254,15 @@ const userStore = useUserStore()
 const userCenterStore = useUserCenterStore()
 
 // 响应式数据
-const uploadDialogVisible = ref(false)
 const editDialogVisible = ref(false)
-const previewDialogVisible = ref(false)
-const previewFile = ref(null)
+const changePasswordVisible = ref(false)
+const verificationVisible = ref(false)
 const editFormRef = ref(null)
+const passwordFormRef = ref(null)
+const verificationFormRef = ref(null)
+const cooldown = ref(0)
 
 // 表单数据
-const uploadForm = ref({
-  description: '',
-  file: null,
-  fileList: []
-})
-
 const editForm = ref({
   realName: '',
   gender: '',
@@ -367,6 +270,16 @@ const editForm = ref({
   phone: '',
   email: '',
   address: ''
+})
+
+const passwordForm = ref({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
+const verificationForm = ref({
+  code: ''
 })
 
 // 表单校验规则
@@ -383,18 +296,44 @@ const editRules = {
   ]
 }
 
+const passwordRules = {
+  currentPassword: [
+    { required: true, message: '请输入当前密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+  ],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6个字符', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    { 
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.value.newPassword) {
+          callback(new Error('两次输入密码不一致'))
+        } else {
+          callback()
+        }
+      }, 
+      trigger: 'blur' 
+    }
+  ]
+}
+
+const verificationRules = {
+  code: [
+    { required: true, message: '请输入验证码', trigger: 'blur' },
+    { len: 6, message: '验证码为6位数字', trigger: 'blur' }
+  ]
+}
+
 // 计算属性
 const userDetail = computed(() => userCenterStore.userDetail)
-const medicalRecords = computed(() => userCenterStore.medicalRecords)
-const sortedMedicalRecords = computed(() => userCenterStore.sortedMedicalRecords)
 const loading = computed(() => userCenterStore.loading)
-const uploading = computed(() => userCenterStore.uploading)
-const uploadProgress = computed(() => userCenterStore.uploadProgress)
 
 // 生命周期钩子
 onMounted(async () => {
   await userCenterStore.fetchUserDetail()
-  await userCenterStore.fetchMedicalRecords()
 })
 
 // 方法
@@ -416,69 +355,10 @@ const handleCommand = (command) => {
   }
 }
 
-// 格式化文件大小
-const formatFileSize = (size) => {
-  if (size < 1024) {
-    return size + ' B'
-  } else if (size < 1024 * 1024) {
-    return (size / 1024).toFixed(2) + ' KB'
-  } else if (size < 1024 * 1024 * 1024) {
-    return (size / (1024 * 1024)).toFixed(2) + ' MB'
-  } else {
-    return (size / (1024 * 1024 * 1024)).toFixed(2) + ' GB'
-  }
-}
-
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return '未知'
   return new Date(dateString).toLocaleDateString('zh-CN')
-}
-
-// 格式化日期时间
-const formatDateTime = (dateString) => {
-  if (!dateString) return '未知'
-  return new Date(dateString).toLocaleString('zh-CN')
-}
-
-// 显示上传对话框
-const showUploadDialog = () => {
-  uploadForm.value = {
-    description: '',
-    file: null,
-    fileList: []
-  }
-  uploadDialogVisible.value = true
-}
-
-// 处理文件选择变化
-const handleFileChange = (file) => {
-  uploadForm.value.file = file.raw
-  uploadForm.value.fileList = [file]
-}
-
-// 提交上传
-const submitUpload = async () => {
-  if (!uploadForm.value.file) {
-    ElMessage.warning('请选择要上传的文件')
-    return
-  }
-  
-  try {
-    const result = await userCenterStore.uploadMedicalRecord(uploadForm.value.file)
-    if (result) {
-      // 如果上传成功，更新文件描述
-      const index = userCenterStore.medicalRecords.findIndex(record => record.id === result.id)
-      if (index !== -1) {
-        userCenterStore.medicalRecords[index].description = uploadForm.value.description
-      }
-      
-      uploadDialogVisible.value = false
-      ElMessage.success('病历上传成功')
-    }
-  } catch (error) {
-    console.error('上传失败:', error)
-  }
 }
 
 // 打开编辑对话框
@@ -509,44 +389,68 @@ const submitEdit = async () => {
   }
 }
 
-// 预览文件
-const showFilePreview = (file) => {
-  previewFile.value = file
-  previewDialogVisible.value = true
+// 打开修改密码对话框
+const openChangePasswordDialog = () => {
+  passwordForm.value = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  }
+  changePasswordVisible.value = true
 }
 
-// 删除记录
-const deleteRecord = async (fileId) => {
-  try {
-    await userCenterStore.deleteMedicalRecord(fileId)
-  } catch (error) {
-    console.error('删除失败:', error)
-  }
-}
-
-// 下载文件
-const downloadFile = (file) => {
-  if (!file || !file.url) {
-    ElMessage.warning('文件不存在或无法下载')
-    return
-  }
+// 提交修改密码
+const submitChangePassword = async () => {
+  if (!passwordFormRef.value) return
   
-  const a = document.createElement('a')
-  a.href = file.url
-  a.download = file.filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
+  try {
+    await passwordFormRef.value.validate()
+    // 打开二次验证对话框
+    verificationForm.value = { code: '' }
+    changePasswordVisible.value = false
+    verificationVisible.value = true
+  } catch (error) {
+    console.error('表单验证失败:', error)
+  }
 }
 
-// 检查文件类型是否为图片
-const isImageFile = (fileType) => {
-  return fileType && fileType.startsWith('image/')
+// 发送验证码
+const sendVerificationCode = () => {
+  if (cooldown.value > 0) return
+  
+  // 模拟发送验证码
+  ElMessage.success('验证码已发送至您的手机')
+  
+  // 启动倒计时
+  cooldown.value = 60
+  const timer = setInterval(() => {
+    cooldown.value--
+    if (cooldown.value <= 0) {
+      clearInterval(timer)
+    }
+  }, 1000)
 }
 
-// 检查文件类型是否为PDF
-const isPdfFile = (fileType) => {
-  return fileType === 'application/pdf'
+// 确认验证
+const confirmVerification = async () => {
+  if (!verificationFormRef.value) return
+  
+  try {
+    await verificationFormRef.value.validate()
+    
+    // 模拟验证过程
+    ElMessage.success('密码修改成功')
+    verificationVisible.value = false
+  } catch (error) {
+    console.error('验证失败:', error)
+  }
+}
+
+// 取消验证
+const cancelVerification = () => {
+  verificationVisible.value = false
+  // 可以选择是否重新打开修改密码对话框
+  // changePasswordVisible.value = true
 }
 </script>
 
@@ -739,20 +643,20 @@ const isPdfFile = (fileType) => {
     
     .action-buttons {
       margin-top: 24px;
-      text-align: center;
+      display: flex;
+      justify-content: center;
+      gap: 16px;
 
-      .edit-info-btn {
-        background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-        border: none;
+      .action-btn {
         border-radius: 10px;
         padding: 10px 20px;
         font-weight: 500;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
         &:hover {
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(38, 126, 255, 0.3);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
         }
 
         .el-icon {
@@ -763,133 +667,7 @@ const isPdfFile = (fileType) => {
   }
 }
 
-.medical-records-card {
-  height: 100%;
-  border-radius: 16px;
-  transition: all 0.3s ease;
-  overflow: hidden;
-  border: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  
-  &:hover {
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-    transform: translateY(-4px);
-  }
-  
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(to right, #f0f4ff, #e6f0ff);
-    padding: 16px;
-    
-    .card-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      h3 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #303133;
-      }
-
-      .el-icon {
-        font-size: 20px;
-        color: #267eff;
-      }
-    }
-
-    .upload-btn {
-      background: #267eff;
-      border: none;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
-      }
-
-      .el-icon {
-        margin-right: 4px;
-      }
-    }
-  }
-  
-  .medical-records-content {
-    min-height: 300px;
-    padding: 16px;
-  }
-  
-  .empty-records {
-    padding: 40px 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-
-    .empty-icon {
-      font-size: 60px;
-      color: #c0c4cc;
-      margin-bottom: 16px;
-    }
-
-    .upload-empty-btn {
-      background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-      border: none;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      margin-top: 16px;
-      
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
-      }
-    }
-  }
-  
-  .records-table {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-
-    :deep(.el-table__header-wrapper th) {
-      background-color: #f5f7fa;
-      color: #606266;
-      font-weight: 600;
-    }
-
-    .file-name-cell {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .file-icon {
-        color: #267eff;
-        font-size: 18px;
-      }
-    }
-
-    .action-column {
-      display: flex;
-      justify-content: space-evenly;
-
-      .action-btn {
-        font-size: 13px;
-        .el-icon {
-          margin-right: 2px;
-        }
-      }
-    }
-  }
-}
-
-.loading-container {
-  padding: 20px 0;
-}
-
-.upload-dialog, .edit-dialog, .preview-dialog {
+.edit-dialog, .password-dialog, .verification-dialog {
   :deep(.el-dialog__header) {
     padding: 20px;
     margin: 0;
@@ -912,69 +690,16 @@ const isPdfFile = (fileType) => {
   }
 }
 
-.upload-dialog-content {
-  .upload-area-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px 0;
-  }
-
-  .upload-icon {
-    font-size: 48px;
-    color: #267eff;
-    margin-bottom: 16px;
-    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-
-  :deep(.el-upload-dragger:hover) .upload-icon {
-    transform: translateY(-8px);
-  }
-
-  :deep(.el-upload-dragger) {
-    width: 100%;
-    height: auto;
-    padding: 24px;
-    border: 2px dashed #dcdfe6;
-    border-radius: 12px;
-    transition: all 0.3s ease;
-    background: rgba(64, 158, 255, 0.02);
-
-    &:hover {
-      border-color: #267eff;
-      background: rgba(64, 158, 255, 0.05);
-      transform: translateY(-2px);
-    }
-  }
-
-  :deep(.el-upload__text) {
-    font-size: 16px;
+.verification-content {
+  .verification-tip {
+    margin-bottom: 20px;
     color: #606266;
-    margin-bottom: 8px;
-
-    em {
-      color: #267eff;
-      font-style: normal;
-      font-weight: 600;
-      cursor: pointer;
-    }
-  }
-
-  :deep(.el-upload__tip) {
-    color: #909399;
-    font-size: 13px;
+    font-size: 14px;
     text-align: center;
   }
 
-  .upload-progress {
-    margin-top: 24px;
-    
-    .progress-text {
-      margin-top: 8px;
-      text-align: center;
-      color: #267eff;
-      font-size: 14px;
-    }
+  .verification-input {
+    width: 100%;
   }
 }
 
@@ -995,64 +720,6 @@ const isPdfFile = (fileType) => {
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
-    }
-  }
-}
-
-.preview-dialog {
-  .file-preview-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-    .image-preview {
-      img {
-        max-width: 100%;
-        max-height: 600px;
-        object-fit: contain;
-        border-radius: 8px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      }
-    }
-    
-    .pdf-preview {
-      width: 100%;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-      border-radius: 8px;
-      overflow: hidden;
-
-      iframe {
-        border: none;
-      }
-    }
-    
-    .unsupported-preview {
-      width: 100%;
-      min-height: 300px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-
-      .empty-icon {
-        font-size: 60px;
-        color: #c0c4cc;
-      }
-
-      .download-btn {
-        background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-        border: none;
-        border-radius: 8px;
-        margin-top: 16px;
-        
-        &:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(38, 126, 255, 0.3);
-        }
-
-        .el-icon {
-          margin-right: 4px;
-        }
-      }
     }
   }
 }
@@ -1084,7 +751,7 @@ const isPdfFile = (fileType) => {
     }
   }
 
-  .user-info-card, .medical-records-card {
+  .user-info-card {
     margin-bottom: 16px;
   }
 
@@ -1092,12 +759,13 @@ const isPdfFile = (fileType) => {
     padding: 24px 0;
   }
 
-  .medical-records-content {
-    min-height: auto;
-  }
-
-  .records-table {
-    white-space: nowrap;
+  .action-buttons {
+    flex-direction: column;
+    gap: 12px;
+    
+    .action-btn {
+      width: 100%;
+    }
   }
 }
 </style> 
