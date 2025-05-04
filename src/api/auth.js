@@ -12,7 +12,7 @@ export function register(data) {
 
 // 获取用户信息
 export function getUserInfo() {
-  return http.get('v1/user/info')
+  return http.get('v1/auth/user/info')
 }
 
 // 退出登录
