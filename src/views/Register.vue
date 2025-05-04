@@ -22,10 +22,6 @@
         <el-form-item label="手机号码" prop="phone">
           <el-input v-model="registerForm.phone" placeholder="请输入手机号码" prefix-icon="Phone" />
         </el-form-item>
-
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="registerForm.email" placeholder="请输入邮箱" prefix-icon="Email" />
-        </el-form-item>
         
         <el-form-item>
           <el-button type="primary" :loading="loading" class="submit-btn" @click="handleRegister" style="width: 100%">注册</el-button>
@@ -58,8 +54,7 @@ export default {
       username: '',
       password: '',
       confirmPassword: '',
-      phone: '',
-      email: ''
+      phone: ''
     })
     
     const validatePass = (rule, value, callback) => {
