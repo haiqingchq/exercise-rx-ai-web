@@ -58,6 +58,15 @@ const routes = [
       title: '患者信息管理',
       requiresAuth: true
     }
+  },
+  {
+    path: '/rehab-prescription',
+    name: 'RehabPrescription',
+    component: () => import('../views/RehabPrescription.vue'),
+    meta: {
+      title: '运动康复处方生成中心',
+      requiresAuth: true
+    }
   }
 ]
 

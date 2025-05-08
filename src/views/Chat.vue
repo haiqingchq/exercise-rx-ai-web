@@ -22,6 +22,9 @@
               <el-dropdown-item command="patientInfo">
                 <el-icon><Document /></el-icon> 患者信息管理
               </el-dropdown-item>
+              <el-dropdown-item command="rehabPrescription">
+                <el-icon><Briefcase /></el-icon> 运动康复处方生成
+              </el-dropdown-item>
               <el-dropdown-item command="userCenter">
                 <el-icon><User /></el-icon> 用户中心
               </el-dropdown-item>
@@ -218,6 +221,8 @@ export default {
         router.push('/user-center')
       } else if (command === 'patientInfo') {
         router.push('/patient-info')
+      } else if (command === 'rehabPrescription') {
+        router.push('/rehab-prescription')
       }
     }
     

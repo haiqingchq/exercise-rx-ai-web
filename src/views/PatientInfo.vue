@@ -9,6 +9,14 @@
         <h2><el-icon><Folder /></el-icon> 患者信息管理</h2>
       </div>
       <div class="header-right">
+        <el-button 
+          type="primary" 
+          class="rehab-btn"
+          @click="goToRehabPrescription"
+        >
+          <el-icon><Briefcase /></el-icon>
+          运动康复处方生成
+        </el-button>
         <el-dropdown trigger="click" @command="handleCommand">
           <span class="user-dropdown">
             <el-avatar :size="32" class="user-avatar">{{ userInfo?.username?.charAt(0) || '用' }}</el-avatar>
@@ -94,6 +102,10 @@ export default {
       router.back()
     }
     
+    const goToRehabPrescription = () => {
+      router.push('/rehab-prescription')
+    }
+    
     const handleCommand = (command) => {
       if (command === 'chat') {
         router.push('/chat')
@@ -114,6 +126,7 @@ export default {
       activeTab,
       userInfo,
       goBack,
+      goToRehabPrescription,
       handleCommand
     }
   }
@@ -175,6 +188,28 @@ export default {
 
 .back-button:hover {
   opacity: 0.8;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.rehab-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 20px;
+  padding: 8px 16px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.rehab-btn:hover {
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .user-dropdown {
