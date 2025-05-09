@@ -105,11 +105,16 @@
 <script>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { getPatientByUserId, updatePatient } from '../../api/patient'
+import { useUserStore } from '../../store/user'
 
 export default {
   name: 'BasicInfoTab',
   
   setup() {
+    const userStore = useUserStore()
+    const patientId = ref(null)
+    
     const patientInfo = ref({
       name: '',
       gender: '',
@@ -138,27 +143,56 @@ export default {
     // 获取患者基本信息
     const fetchPatientInfo = async () => {
       try {
-        // 这里应该调用API获取患者基本信息
-        // 模拟API调用
-        setTimeout(() => {
+        loading.value = true
+        // 使用当前登录用户的ID获取患者信息
+        const userId = userStore.userInfo?.id
+        if (!userId) {
+          ElMessage.warning('未获取到用户信息，请重新登录')
+          return
+        }
+        
+        const response = await getPatientByUserId(userId)
+        if (response.code === 200 && response.data) {
+          patientId.value = response.data.id
+          // 将API返回的数据映射到组件的数据模型
           patientInfo.value = {
-            name: '张三',
-            gender: '男',
-            age: 35,
-            birthDate: '1989-05-15',
-            idCard: '110101198905153456',
-            bloodType: 'A型',
-            maritalStatus: '已婚',
-            occupation: '工程师',
-            phone: '13812345678',
-            emergencyContact: '李四',
-            emergencyPhone: '13987654321',
-            address: '北京市海淀区中关村南大街5号'
+            name: response.data.name || '',
+            gender: response.data.gender || '',
+            age: calculateAge(response.data.birth_date) || '',
+            birthDate: response.data.birth_date || '',
+            idCard: response.data.id_card || '',
+            bloodType: response.data.blood_type || '',
+            maritalStatus: response.data.marital_status || '',
+            occupation: response.data.occupation || '',
+            phone: response.data.phone || '',
+            emergencyContact: response.data.emergency_contact || '',
+            emergencyPhone: response.data.emergency_phone || '',
+            address: response.data.address || ''
           }
-        }, 500)
+        } else {
+          ElMessage.warning('未找到患者信息')
+        }
       } catch (error) {
         console.error('获取患者基本信息失败:', error)
+        ElMessage.error('获取患者信息失败')
+      } finally {
+        loading.value = false
       }
+    }
+    
+    // 根据出生日期计算年龄
+    const calculateAge = (birthDate) => {
+      if (!birthDate) return null
+      const today = new Date()
+      const birthDay = new Date(birthDate)
+      let age = today.getFullYear() - birthDay.getFullYear()
+      const monthDiff = today.getMonth() - birthDay.getMonth()
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDay.getDate())) {
+        age--
+      }
+      
+      return age
     }
     
     // 打开编辑对话框
@@ -175,17 +209,42 @@ export default {
         if (valid) {
           loading.value = true
           try {
-            // 这里应该调用API保存患者基本信息
-            // 模拟API调用
-            setTimeout(() => {
+            if (!patientId.value) {
+              ElMessage.error('未找到患者ID，无法更新信息')
+              loading.value = false
+              return
+            }
+            
+            // 将表单数据转换为API所需格式
+            const patientData = {
+              name: formData.name,
+              gender: formData.gender,
+              birth_date: formData.birthDate,
+              id_card: formData.idCard,
+              blood_type: formData.bloodType,
+              marital_status: formData.maritalStatus,
+              occupation: formData.occupation,
+              phone: formData.phone,
+              emergency_contact: formData.emergencyContact,
+              emergency_phone: formData.emergencyPhone,
+              address: formData.address
+            }
+            
+            // 调用API更新患者信息
+            const response = await updatePatient(patientId.value, patientData)
+            
+            if (response.code === 200) {
+              // 更新成功后更新页面显示的数据
               Object.assign(patientInfo.value, formData)
               dialogVisible.value = false
               ElMessage.success('保存成功')
-              loading.value = false
-            }, 1000)
+            } else {
+              ElMessage.error(response.message || '保存失败')
+            }
           } catch (error) {
             console.error('保存患者基本信息失败:', error)
             ElMessage.error('保存失败，请重试')
+          } finally {
             loading.value = false
           }
         }
