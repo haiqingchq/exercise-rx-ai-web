@@ -23,15 +23,15 @@
             v-for="(chat, index) in chatHistoryList" 
             :key="index" 
             class="history-item"
-            :class="{ 'active': currentChatId === chat.id }"
-            @click="switchChat(chat.id)"
+            :class="{ 'active': currentChatId === chat.session_id }"
+            @click="switchChat(chat.session_id)"
           >
             <div class="history-item-icon">
               <el-icon><ChatDotRound /></el-icon>
             </div>
             <div class="history-item-content">
               <div class="history-item-title">{{ chat.title || '新的对话' }}</div>
-              <div class="history-item-time">{{ formatDate(chat.timestamp) }}</div>
+              <div class="history-item-time">{{ formatDate(chat.updated_at || chat.created_at) }}</div>
             </div>
           </div>
         </div>
@@ -114,7 +114,7 @@ import { useChatStore } from '../store/chat'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
 import HeaderNav from '../components/common/HeaderNav.vue'
-import { ElMessageBox } from 'element-plus'
+import { ElMessageBox, ElMessage } from 'element-plus'
 import { Plus, ChatDotRound, Document, TopLeft } from '@element-plus/icons-vue'
 
 export default {
@@ -136,7 +136,7 @@ export default {
     
     const messagesContainer = ref(null)
     const hasMoreMessages = ref(false)
-    const chatHistoryList = ref([])
+    const chatHistoryList = computed(() => chatStore.sortedSessions)
     const currentChatId = ref(null)
     
     // 计算属性
@@ -149,32 +149,15 @@ export default {
     // 获取聊天记录
     const fetchChatHistory = async () => {
       try {
-        await chatStore.fetchChatHistory()
-        scrollToBottom()
-        
-        // 模拟获取聊天历史列表
-        chatHistoryList.value = [
-          {
-            id: '1',
-            title: '关于腰痛的咨询',
-            timestamp: new Date('2023-10-15T12:30:00')
-          },
-          {
-            id: '2',
-            title: '运动损伤康复建议',
-            timestamp: new Date('2023-10-10T09:15:00')
-          },
-          {
-            id: '3',
-            title: '饮食建议咨询',
-            timestamp: new Date('2023-10-05T18:20:00')
-          }
-        ]
+        // 获取所有会话列表
+        await chatStore.fetchAllSessions()
         
         // 默认选中第一个聊天
         if (chatHistoryList.value.length > 0) {
-          currentChatId.value = chatHistoryList.value[0].id
+          currentChatId.value = chatHistoryList.value[0].session_id
         }
+        
+        scrollToBottom()
       } catch (error) {
         console.error('获取聊天记录失败:', error)
       }
@@ -183,7 +166,11 @@ export default {
     // 发送消息
     const handleSendMessage = async (content) => {
       try {
-        await chatStore.sendUserMessage(content)
+        if (!currentChatId.value) {
+          ElMessage.warning('请先选择一个聊天会话或创建新的会话')
+          return
+        }
+        await chatStore.sendUserMessage(content, currentChatId.value)
         scrollToBottom()
       } catch (error) {
         console.error('发送消息失败:', error)
@@ -193,7 +180,11 @@ export default {
     // 上传文件
     const handleUploadFile = async (file) => {
       try {
-        await chatStore.uploadFileAction(file)
+        if (!currentChatId.value) {
+          ElMessage.warning('请先选择一个聊天会话或创建新的会话')
+          return
+        }
+        await chatStore.uploadFileAction(file, currentChatId.value)
         scrollToBottom()
       } catch (error) {
         console.error('上传文件失败:', error)
@@ -244,29 +235,37 @@ export default {
     }
     
     // 新建聊天
-    const startNewChat = () => {
-      // 清空当前聊天内容
-      chatStore.clearMessages()
-      
-      // 创建新的聊天记录
-      const newChatId = 'chat_' + Date.now()
-      
-      // 添加到历史记录列表顶部
-      chatHistoryList.value.unshift({
-        id: newChatId,
-        title: '新的对话',
-        timestamp: new Date()
-      })
-      
-      // 设置为当前活动聊天
-      currentChatId.value = newChatId
+    const startNewChat = async () => {
+      try {
+        // 调用API创建新会话
+        const response = await chatStore.createNewSession()
+        
+        // 清空当前聊天内容
+        chatStore.clearMessages()
+        
+        // 获取会话列表（包含新创建的会话）
+        await chatStore.fetchAllSessions()
+        
+        // 设置为当前活动聊天（使用返回的会话ID）
+        if (response && response.session_id) {
+          currentChatId.value = response.session_id
+        }
+        
+      } catch (error) {
+        console.error('新建聊天失败:', error)
+      }
     }
     
     // 切换聊天
-    const switchChat = (chatId) => {
-      currentChatId.value = chatId
-      // 这里应该是从服务器加载该聊天的消息
-      console.log('切换到聊天:', chatId)
+    const switchChat = async (chatId) => {
+      try {
+        currentChatId.value = chatId
+        // 从服务器加载该聊天的消息
+        await chatStore.fetchSessionMessages(chatId)
+        scrollToBottom()
+      } catch (error) {
+        console.error('加载会话消息失败:', error)
+      }
     }
     
     // 格式化日期

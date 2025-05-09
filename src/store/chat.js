@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { getChatHistory, sendMessage, uploadFile } from '../api/chat'
+import { getChatHistory, sendMessage, uploadFile, createChatSession, getAllSessions, getSessionMessages } from '../api/chat'
 import { ElMessage } from 'element-plus'
 
 export const useChatStore = defineStore('chat', {
@@ -7,12 +7,16 @@ export const useChatStore = defineStore('chat', {
     messages: [],
     loading: false,
     uploading: false,
-    uploadProgress: 0
+    uploadProgress: 0,
+    sessions: []
   }),
   
   getters: {
     sortedMessages: (state) => {
       return [...state.messages].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+    },
+    sortedSessions: (state) => {
+      return [...state.sessions].sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
     }
   },
   
@@ -33,12 +37,59 @@ export const useChatStore = defineStore('chat', {
       }
     },
     
+    // 获取所有会话
+    async fetchAllSessions() {
+      try {
+        this.loading = true
+        const response = await getAllSessions()
+        this.sessions = response.data
+        return response.data
+      } catch (error) {
+        console.error('获取会话列表失败:', error)
+        ElMessage.error('获取会话列表失败')
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 获取特定会话的消息
+    async fetchSessionMessages(sessionId) {
+      try {
+        this.loading = true
+        const response = await getSessionMessages(sessionId)
+        this.messages = response.data
+        return response.data
+      } catch (error) {
+        console.error(`获取会话 ${sessionId} 的消息失败:`, error)
+        ElMessage.error('获取会话消息失败')
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+    
+    // 创建新的聊天会话
+    async createNewSession() {
+      try {
+        this.loading = true
+        const response = await createChatSession()
+        return response.data
+      } catch (error) {
+        console.error('创建新会话失败:', error)
+        ElMessage.error('创建新会话失败')
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+    
     // 发送消息
-    async sendUserMessage(content) {
+    async sendUserMessage(content, sessionId) {
       const tempId = Date.now().toString()
       const message = {
         id: tempId,
-        content:content,
+        content: content,
         type: 'text',
         role: 'user',
         timestamp: new Date().toISOString(),
@@ -50,7 +101,10 @@ export const useChatStore = defineStore('chat', {
       
       try {
         this.loading = true
-        const response = await sendMessage({ "prompt": content })
+        const response = await sendMessage({ 
+          "prompt": content,
+          "session_id": sessionId
+        })
         
         // 更新消息状态
         const index = this.messages.findIndex(msg => msg.id === tempId)
@@ -96,7 +150,7 @@ export const useChatStore = defineStore('chat', {
     },
     
     // 上传文件
-    async uploadFileAction(file) {
+    async uploadFileAction(file, sessionId) {
       try {
         this.uploading = true
         this.uploadProgress = 0
@@ -119,7 +173,7 @@ export const useChatStore = defineStore('chat', {
         
         this.messages.push(message)
         
-        const response = await uploadFile(file)
+        const response = await uploadFile(file, sessionId)
         
         // 更新消息状态
         const index = this.messages.findIndex(msg => msg.id === tempId)
@@ -194,6 +248,22 @@ export const useChatStore = defineStore('chat', {
     // 清空聊天记录
     clearMessages() {
       this.messages = []
+    },
+    
+    // 清空所有聊天历史
+    async clearChatHistory() {
+      try {
+        this.loading = true
+        // 这里应该有一个API调用来清空服务器上的聊天历史
+        // 但由于目前没有实现这个API，我们只清空本地状态
+        this.messages = []
+        ElMessage.success('聊天记录已清空')
+      } catch (error) {
+        console.error('清空聊天记录失败:', error)
+        ElMessage.error('清空聊天记录失败')
+      } finally {
+        this.loading = false
+      }
     }
   }
 }) 
