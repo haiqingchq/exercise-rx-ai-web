@@ -1,116 +1,108 @@
 <template>
   <div class="chat-container">
-    <div class="chat-header">
-      <div class="header-left">
-        <h2><el-icon><ChatDotRound /></el-icon> 智能问诊</h2>
-      </div>
-      <div class="header-right">
-        <el-dropdown trigger="click" @command="handleCommand">
-          <span class="user-dropdown">
-            <el-avatar :size="32" class="user-avatar">{{ userInfo?.username?.charAt(0) || '用' }}</el-avatar>
-            {{ userInfo?.username || '用户' }}
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="clearChat">
-                <el-icon><Delete /></el-icon> 清空聊天记录
-              </el-dropdown-item>
-              <el-dropdown-item command="viewVideo">
-                <el-icon><Film /></el-icon> 视频解析
-              </el-dropdown-item>
-              <el-dropdown-item command="patientInfo">
-                <el-icon><Document /></el-icon> 患者信息管理
-              </el-dropdown-item>
-              <el-dropdown-item command="rehabPrescription">
-                <el-icon><Briefcase /></el-icon> 运动康复处方生成
-              </el-dropdown-item>
-              <el-dropdown-item command="userCenter">
-                <el-icon><User /></el-icon> 用户中心
-              </el-dropdown-item>
-              <el-dropdown-item command="logout" divided>
-                <el-icon><SwitchButton /></el-icon> 退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </div>
+    <header-nav 
+      title="智能问诊" 
+      icon="ChatDotRound" 
+      :show-clear-chat="true"
+      @clearChat="clearChat"
+    />
     
-    <div class="chat-messages" ref="messagesContainer">
-      <!-- 欢迎消息 -->
-      <div v-if="!messages.length" class="welcome-container">
-        <div class="welcome-content">
-          <div class="welcome-header">
-            <el-icon class="welcome-icon"><ChatDotRound /></el-icon>
-            <h3>欢迎使用基于多模态大模型的个性化处方生成系统</h3>
-          </div>
-          <p class="welcome-description">您可以上传您的病例、医学检查结果等信息，与AI进行对话，获取个性化的处方建议。</p>
-          <div class="welcome-tips">
-            <el-card class="tip-card">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><Document /></el-icon>
-                  <span>上传资料</span>
-                </div>
-              </template>
-              <div class="card-content">
-                上传您的病例、检查报告等医疗资料，AI会分析这些信息
-              </div>
-            </el-card>
-            
-            <el-card class="tip-card">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><ChatDotRound /></el-icon>
-                  <span>详细描述</span>
-                </div>
-              </template>
-              <div class="card-content">
-                详细描述您的症状、病史、用药情况等，AI会给出更精准的建议
-              </div>
-            </el-card>
-            
-            <el-card class="tip-card">
-              <template #header>
-                <div class="card-header">
-                  <el-icon><Film /></el-icon>
-                  <span>视频解析</span>
-                </div>
-              </template>
-              <div class="card-content">
-                您还可以上传相关视频进行分析，获取更全面的健康建议
-              </div>
-            </el-card>
+    <div class="chat-content">
+      <!-- 左侧聊天列表区域 -->
+      <div class="chat-sidebar">
+        <div class="sidebar-header">
+          <el-button type="primary" @click="startNewChat" class="new-chat-btn">
+            <el-icon><Plus /></el-icon> 新建聊天
+          </el-button>
+        </div>
+        
+        <div class="chat-history">
+          <div class="history-title">聊天历史</div>
+          <el-empty v-if="chatHistoryList.length === 0" description="暂无聊天历史" />
+          <div 
+            v-for="(chat, index) in chatHistoryList" 
+            :key="index" 
+            class="history-item"
+            :class="{ 'active': currentChatId === chat.id }"
+            @click="switchChat(chat.id)"
+          >
+            <div class="history-item-icon">
+              <el-icon><ChatDotRound /></el-icon>
+            </div>
+            <div class="history-item-content">
+              <div class="history-item-title">{{ chat.title || '新的对话' }}</div>
+              <div class="history-item-time">{{ formatDate(chat.timestamp) }}</div>
+            </div>
           </div>
         </div>
       </div>
       
-      <!-- 聊天消息列表 -->
-      <template v-else>
-        <chat-message 
-          v-for="message in sortedMessages" 
-          :key="message.id" 
-          :message="message"
-          @resend="handleResend"
-        />
-      </template>
-      
-      <!-- 加载更多按钮 -->
-      <div v-if="hasMoreMessages" class="load-more">
-        <el-button type="primary" plain size="small" @click="loadMoreMessages">
-          <el-icon><TopLeft /></el-icon> 加载更多消息
-        </el-button>
+      <!-- 右侧聊天内容区域 -->
+      <div class="chat-main">
+        <div class="chat-messages" ref="messagesContainer">
+          <!-- 欢迎消息 -->
+          <div v-if="!messages.length" class="welcome-container">
+            <div class="welcome-content">
+              <div class="welcome-header">
+                <el-icon class="welcome-icon"><ChatDotRound /></el-icon>
+                <h3>欢迎使用基于多模态大模型的个性化处方生成系统</h3>
+              </div>
+              <p class="welcome-description">您可以上传您的病例、医学检查结果等信息，与AI进行对话，获取个性化的处方建议。</p>
+              <div class="welcome-tips">
+                <el-card class="tip-card">
+                  <template #header>
+                    <div class="card-header">
+                      <el-icon><Document /></el-icon>
+                      <span>上传资料</span>
+                    </div>
+                  </template>
+                  <div class="card-content">
+                    上传您的病例、检查报告等医疗资料，AI会分析这些信息
+                  </div>
+                </el-card>
+                
+                <el-card class="tip-card">
+                  <template #header>
+                    <div class="card-header">
+                      <el-icon><ChatDotRound /></el-icon>
+                      <span>详细描述</span>
+                    </div>
+                  </template>
+                  <div class="card-content">
+                    详细描述您的症状、病史、用药情况等，AI会给出更精准的建议
+                  </div>
+                </el-card>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 聊天消息列表 -->
+          <template v-else>
+            <chat-message 
+              v-for="message in sortedMessages" 
+              :key="message.id" 
+              :message="message"
+              @resend="handleResend"
+            />
+          </template>
+          
+          <!-- 加载更多按钮 -->
+          <div v-if="hasMoreMessages" class="load-more">
+            <el-button type="primary" plain size="small" @click="loadMoreMessages">
+              <el-icon><TopLeft /></el-icon> 加载更多消息
+            </el-button>
+          </div>
+        </div>
+        
+        <div class="chat-input-area">
+          <chat-input
+            :sending="loading"
+            :uploading="uploading"
+            @send="handleSendMessage"
+            @upload="handleUploadFile"
+          />
+        </div>
       </div>
-    </div>
-    
-    <div class="chat-input-area">
-      <chat-input
-        :sending="loading"
-        :uploading="uploading"
-        @send="handleSendMessage"
-        @upload="handleUploadFile"
-      />
     </div>
   </div>
 </template>
@@ -119,26 +111,33 @@
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useUserStore } from '../store/user'
 import { useChatStore } from '../store/chat'
-import { useRouter } from 'vue-router'
 import ChatMessage from '../components/chat/ChatMessage.vue'
 import ChatInput from '../components/chat/ChatInput.vue'
+import HeaderNav from '../components/common/HeaderNav.vue'
 import { ElMessageBox } from 'element-plus'
+import { Plus, ChatDotRound, Document, TopLeft } from '@element-plus/icons-vue'
 
 export default {
   name: 'ChatView',
   
   components: {
     ChatMessage,
-    ChatInput
+    ChatInput,
+    HeaderNav,
+    Plus,
+    ChatDotRound,
+    Document,
+    TopLeft
   },
   
   setup() {
-    const router = useRouter()
     const userStore = useUserStore()
     const chatStore = useChatStore()
     
     const messagesContainer = ref(null)
     const hasMoreMessages = ref(false)
+    const chatHistoryList = ref([])
+    const currentChatId = ref(null)
     
     // 计算属性
     const messages = computed(() => chatStore.messages)
@@ -152,6 +151,30 @@ export default {
       try {
         await chatStore.fetchChatHistory()
         scrollToBottom()
+        
+        // 模拟获取聊天历史列表
+        chatHistoryList.value = [
+          {
+            id: '1',
+            title: '关于腰痛的咨询',
+            timestamp: new Date('2023-10-15T12:30:00')
+          },
+          {
+            id: '2',
+            title: '运动损伤康复建议',
+            timestamp: new Date('2023-10-10T09:15:00')
+          },
+          {
+            id: '3',
+            title: '饮食建议咨询',
+            timestamp: new Date('2023-10-05T18:20:00')
+          }
+        ]
+        
+        // 默认选中第一个聊天
+        if (chatHistoryList.value.length > 0) {
+          currentChatId.value = chatHistoryList.value[0].id
+        }
       } catch (error) {
         console.error('获取聊天记录失败:', error)
       }
@@ -198,57 +221,106 @@ export default {
     
     // 加载更多消息
     const loadMoreMessages = () => {
-      // 此处应该调用加载更多消息的API
-      // 由于是演示，这里暂不实现
-      hasMoreMessages.value = false
+      // 实现加载更多消息的逻辑
+      console.log('加载更多消息')
     }
     
-    // 处理下拉菜单命令
-    const handleCommand = (command) => {
-      if (command === 'clearChat') {
-        ElMessageBox.confirm('确定要清空所有聊天记录吗？', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          chatStore.clearMessages()
-        }).catch(() => {})
-      } else if (command === 'logout') {
-        userStore.logoutAction()
-      } else if (command === 'viewVideo') {
-        router.push('/video')
-      } else if (command === 'userCenter') {
-        router.push('/user-center')
-      } else if (command === 'patientInfo') {
-        router.push('/patient-info')
-      } else if (command === 'rehabPrescription') {
-        router.push('/rehab-prescription')
+    // 清空聊天记录
+    const clearChat = async () => {
+      try {
+        await ElMessageBox.confirm(
+          '确定要清空所有聊天记录吗？此操作不可撤销',
+          '清空聊天记录',
+          {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning',
+          }
+        )
+        await chatStore.clearChatHistory()
+      } catch (error) {
+        console.log('用户取消了清空聊天记录操作')
       }
     }
     
-    // 监听消息变化
-    watch(messages, () => {
-      scrollToBottom()
-    })
+    // 新建聊天
+    const startNewChat = () => {
+      // 清空当前聊天内容
+      chatStore.clearMessages()
+      
+      // 创建新的聊天记录
+      const newChatId = 'chat_' + Date.now()
+      
+      // 添加到历史记录列表顶部
+      chatHistoryList.value.unshift({
+        id: newChatId,
+        title: '新的对话',
+        timestamp: new Date()
+      })
+      
+      // 设置为当前活动聊天
+      currentChatId.value = newChatId
+    }
     
-    onMounted(async () => {
-      await userStore.fetchUserInfo()
-      await fetchChatHistory()
+    // 切换聊天
+    const switchChat = (chatId) => {
+      currentChatId.value = chatId
+      // 这里应该是从服务器加载该聊天的消息
+      console.log('切换到聊天:', chatId)
+    }
+    
+    // 格式化日期
+    const formatDate = (date) => {
+      if (!date) return ''
+      const now = new Date()
+      const chatDate = new Date(date)
+      
+      // 今天的消息只显示时间
+      if (chatDate.toDateString() === now.toDateString()) {
+        return chatDate.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+      }
+      
+      // 一周内的消息显示星期几
+      const daysDiff = Math.floor((now - chatDate) / (1000 * 60 * 60 * 24))
+      if (daysDiff < 7) {
+        const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+        return weekdays[chatDate.getDay()]
+      }
+      
+      // 其他显示日期
+      return chatDate.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
+    }
+    
+    onMounted(() => {
+      fetchChatHistory()
+      
+      // 设置自动滚动到底部
+      watch(
+        () => messages.value.length,
+        () => {
+          scrollToBottom()
+        }
+      )
     })
     
     return {
+      messagesContainer,
       messages,
       sortedMessages,
       userInfo,
       loading,
       uploading,
-      messagesContainer,
       hasMoreMessages,
+      chatHistoryList,
+      currentChatId,
       handleSendMessage,
       handleUploadFile,
       handleResend,
       loadMoreMessages,
-      handleCommand
+      clearChat,
+      startNewChat,
+      switchChat,
+      formatDate
     }
   }
 }
@@ -256,252 +328,172 @@ export default {
 
 <style scoped>
 .chat-container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafc;
+  height: 100%;
+  background-color: #f5f7fa;
 }
 
-.chat-header {
+.chat-content {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 24px;
-  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-  color: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 10;
+  flex: 1;
+  overflow: hidden;
 }
 
-.header-left h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+/* 左侧聊天列表样式 */
+.chat-sidebar {
+  width: 260px;
+  background-color: #fff;
+  border-right: 1px solid #ebeef5;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  height: 100%;
 }
 
-.header-left h2 .el-icon {
-  font-size: 22px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid #ebeef5;
 }
 
-.user-dropdown {
+.new-chat-btn {
+  width: 100%;
+}
+
+.chat-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+
+.history-title {
+  padding: 12px 16px;
+  font-size: 14px;
+  color: #909399;
+  font-weight: bold;
+  border-bottom: 1px solid #ebeef5;
+}
+
+.history-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  padding: 12px 16px;
   cursor: pointer;
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s;
+  border-bottom: 1px solid #f0f2f5;
 }
 
-.user-dropdown:hover {
-  background: rgba(255, 255, 255, 0.25);
+.history-item:hover {
+  background-color: #f5f7fa;
 }
 
-.user-avatar {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-weight: 600;
+.history-item.active {
+  background-color: #ecf5ff;
+}
+
+.history-item-icon {
+  margin-right: 12px;
+  color: var(--el-color-primary);
+}
+
+.history-item-content {
+  flex: 1;
+  overflow: hidden;
+}
+
+.history-item-title {
+  font-size: 14px;
+  color: #303133;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-time {
+  font-size: 12px;
+  color: #909399;
+}
+
+/* 右侧聊天内容样式 */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .chat-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
-  background-color: #f9fafc;
-  background-image: 
-    radial-gradient(#e4f0ff 1px, transparent 1px),
-    radial-gradient(#e4f0ff 1px, transparent 1px);
-  background-size: 20px 20px;
-  background-position: 0 0, 10px 10px;
-  scroll-behavior: smooth;
-}
-
-.chat-input-area {
-  padding: 16px 24px;
-  background-color: #fff;
-  border-top: 1px solid #ebeef5;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
-  position: relative;
-  z-index: 5;
-}
-
-.load-more {
-  text-align: center;
-  margin: 20px 0;
+  padding: 20px;
 }
 
 .welcome-container {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   height: 100%;
-  padding: 20px;
 }
 
 .welcome-content {
-  max-width: 900px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 40px;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.05),
-    0 1px 3px rgba(0, 0, 0, 0.1);
-  animation: fadeUp 0.8s ease forwards;
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
 }
 
 .welcome-header {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
 .welcome-icon {
-  font-size: 48px;
-  color: #267eff;
-  margin-bottom: 16px;
-  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-  color: white;
-  border-radius: 50%;
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 20px rgba(38, 126, 255, 0.3);
-  animation: pulse 2s infinite;
-}
-
-.welcome-content h3 {
   font-size: 24px;
-  margin-bottom: 16px;
-  color: #303133;
-  text-align: center;
-  font-weight: 600;
+  color: var(--el-color-primary);
+  margin-right: 10px;
 }
 
 .welcome-description {
-  color: #606266;
-  margin-bottom: 40px;
-  text-align: center;
-  font-size: 16px;
-  line-height: 1.6;
+  color: #666;
+  margin-bottom: 30px;
 }
 
 .welcome-tips {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 24px;
-  margin-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-top: 20px;
 }
 
 .tip-card {
-  width: 240px;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: all 0.3s ease;
-  border: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-}
-
-.tip-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  height: 100%;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  background: linear-gradient(to right, #f0f4ff, #e6f0ff);
-  padding: 16px;
 }
 
 .card-header .el-icon {
   margin-right: 8px;
-  color: #267eff;
-  font-size: 20px;
-}
-
-.card-header span {
-  font-weight: 600;
-  color: #303133;
+  color: var(--el-color-primary);
 }
 
 .card-content {
-  color: #606266;
-  font-size: 14px;
-  line-height: 1.6;
-  padding: 16px;
-  background: white;
+  color: #666;
+  line-height: 1.5;
 }
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.chat-input-area {
+  margin-top: auto;
+  padding: 10px 20px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
 }
 
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(38, 126, 255, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(38, 126, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(38, 126, 255, 0);
-  }
-}
-
-@media screen and (max-width: 768px) {
-  .welcome-content {
-    padding: 30px 20px;
-  }
-  
-  .welcome-tips {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .tip-card {
-    width: 100%;
-    max-width: 320px;
-  }
-  
-  .chat-header {
-    padding: 12px 16px;
-  }
-  
-  .header-left h2 {
-    font-size: 18px;
-  }
-  
-  .chat-messages {
-    padding: 16px;
-  }
-  
-  .chat-input-area {
-    padding: 12px 16px;
-  }
+.load-more {
+  text-align: center;
+  margin: 10px 0;
 }
 </style> 

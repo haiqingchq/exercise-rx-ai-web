@@ -1,39 +1,10 @@
 <template>
   <div class="user-center-container">
-    <div class="user-center-header">
-      <div class="header-left">
-        <el-button type="text" @click="goBack" class="back-button">
-          <el-icon><Back /></el-icon>
-          返回
-        </el-button>
-        <h2><el-icon><User /></el-icon> 用户中心</h2>
-      </div>
-      <div class="header-right">
-        <el-dropdown trigger="click" @command="handleCommand">
-          <span class="user-dropdown">
-            <el-avatar :size="32" class="user-avatar">{{ userDetail?.username?.charAt(0)?.toUpperCase() || '用' }}</el-avatar>
-            {{ userDetail?.username || '用户' }}
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="chat">
-                <el-icon><ChatDotRound /></el-icon> 智能问诊
-              </el-dropdown-item>
-              <el-dropdown-item command="video">
-                <el-icon><Film /></el-icon> 视频解析
-              </el-dropdown-item>
-              <el-dropdown-item command="patientInfo">
-                <el-icon><Document /></el-icon> 患者信息管理
-              </el-dropdown-item>
-              <el-dropdown-item command="logout" divided>
-                <el-icon><SwitchButton /></el-icon> 退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </div>
+    <header-nav 
+      title="用户中心" 
+      icon="User" 
+      :show-back="true"
+    />
 
     <div class="user-center-content">
       <el-row :gutter="24">
@@ -243,14 +214,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useUserStore } from '../store/user'
 import { useUserCenterStore } from '../store/user-center'
 import { ElMessage } from 'element-plus'
+import HeaderNav from '../components/common/HeaderNav.vue'
 
-// 路由和状态管理
-const router = useRouter()
-const userStore = useUserStore()
+// 状态管理
 const userCenterStore = useUserCenterStore()
 
 // 响应式数据
@@ -337,24 +305,6 @@ onMounted(async () => {
 })
 
 // 方法
-// 返回上一页
-const goBack = () => {
-  router.back()
-}
-
-// 下拉菜单命令处理
-const handleCommand = (command) => {
-  if (command === 'logout') {
-    userStore.logoutAction()
-  } else if (command === 'chat') {
-    router.push('/chat')
-  } else if (command === 'video') {
-    router.push('/video')
-  } else if (command === 'patientInfo') {
-    router.push('/patient-info')
-  }
-}
-
 // 格式化日期
 const formatDate = (dateString) => {
   if (!dateString) return '未知'
@@ -466,85 +416,6 @@ const cancelVerification = () => {
   background-size: 20px 20px;
   background-position: 0 0, 10px 10px;
   overflow: hidden;
-}
-
-.user-center-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 24px;
-  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-  color: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  
-  .header-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    
-    h2 {
-      margin: 0;
-      font-size: 20px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-
-      .el-icon {
-        font-size: 22px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 50%;
-        padding: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-    }
-
-    .back-button {
-      display: flex;
-      align-items: center;
-      color: white;
-      font-size: 14px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 20px;
-      padding: 6px 12px;
-      transition: all 0.3s ease;
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.25);
-        transform: translateX(-2px);
-      }
-
-      .el-icon {
-        margin-right: 4px;
-      }
-    }
-  }
-  
-  .user-dropdown {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    gap: 8px;
-    font-size: 14px;
-    color: white;
-    background: rgba(255, 255, 255, 0.15);
-    padding: 6px 12px;
-    border-radius: 20px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .user-avatar {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      font-weight: 600;
-    }
-  }
 }
 
 .user-center-content {
@@ -725,18 +596,6 @@ const cancelVerification = () => {
 }
 
 @media screen and (max-width: 768px) {
-  .user-center-header {
-    padding: 12px 16px;
-    
-    .header-left {
-      gap: 8px;
-      
-      h2 {
-        font-size: 18px;
-      }
-    }
-  }
-
   .user-center-content {
     padding: 16px;
   }

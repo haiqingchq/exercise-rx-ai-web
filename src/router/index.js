@@ -33,15 +33,6 @@ const routes = [
     }
   },
   {
-    path: '/video',
-    name: 'Video',
-    component: () => import('../views/Video.vue'),
-    meta: {
-      title: '视频解析',
-      requiresAuth: true
-    }
-  },
-  {
     path: '/user-center',
     name: 'UserCenter',
     component: () => import('../views/UserCenter.vue'),

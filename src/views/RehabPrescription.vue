@@ -1,42 +1,10 @@
 <template>
   <div class="rehab-prescription-container">
-    <div class="rehab-prescription-header">
-      <div class="header-left">
-        <el-button type="text" @click="goBack" class="back-button">
-          <el-icon><Back /></el-icon>
-          返回
-        </el-button>
-        <h2><el-icon><Briefcase /></el-icon> 运动康复处方生成中心</h2>
-      </div>
-      <div class="header-right">
-        <el-dropdown trigger="click" @command="handleCommand">
-          <span class="user-dropdown">
-            <el-avatar :size="32" class="user-avatar">{{ userInfo?.username?.charAt(0) || '用' }}</el-avatar>
-            {{ userInfo?.username || '用户' }}
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="chat">
-                <el-icon><ChatDotRound /></el-icon> 智能问诊
-              </el-dropdown-item>
-              <el-dropdown-item command="video">
-                <el-icon><Film /></el-icon> 视频解析
-              </el-dropdown-item>
-              <el-dropdown-item command="patientInfo">
-                <el-icon><Document /></el-icon> 患者信息管理
-              </el-dropdown-item>
-              <el-dropdown-item command="userCenter">
-                <el-icon><User /></el-icon> 用户中心
-              </el-dropdown-item>
-              <el-dropdown-item command="logout" divided>
-                <el-icon><SwitchButton /></el-icon> 退出登录
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </div>
+    <header-nav 
+      title="运动康复处方生成中心" 
+      icon="Briefcase" 
+      :show-back="true"
+    />
     
     <div class="rehab-prescription-content">
       <div class="content-layout">
@@ -103,39 +71,24 @@
 
 <script>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
 import { ElMessage } from 'element-plus'
+import HeaderNav from '../components/common/HeaderNav.vue'
 
 export default {
   name: 'RehabPrescription',
   
+  components: {
+    HeaderNav
+  },
+  
   setup() {
-    const router = useRouter()
     const userStore = useUserStore()
     
     const userInfo = computed(() => userStore.userInfo)
     const loading = ref(false)
     const aggregating = ref(false)
     const prescriptionContent = ref('')
-    
-    const goBack = () => {
-      router.back()
-    }
-    
-    const handleCommand = (command) => {
-      if (command === 'chat') {
-        router.push('/chat')
-      } else if (command === 'video') {
-        router.push('/video')
-      } else if (command === 'patientInfo') {
-        router.push('/patient-info')
-      } else if (command === 'userCenter') {
-        router.push('/user-center')
-      } else if (command === 'logout') {
-        userStore.logoutAction()
-      }
-    }
     
     const aggregatePatientInfo = async () => {
       aggregating.value = true
@@ -197,8 +150,6 @@ export default {
       loading,
       aggregating,
       prescriptionContent,
-      goBack,
-      handleCommand,
       aggregatePatientInfo,
       generatePrescription,
       regeneratePrescription
@@ -209,111 +160,38 @@ export default {
 
 <style scoped>
 .rehab-prescription-container {
-  height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f9fafc;
-}
-
-.rehab-prescription-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 24px;
-  background: linear-gradient(135deg, #18a1ff 0%, #267eff 100%);
-  color: white;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 10;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-left h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.header-left h2 .el-icon {
-  font-size: 22px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-button {
-  color: white;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.back-button:hover {
-  opacity: 0.8;
-}
-
-.user-dropdown {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: white;
-  background: rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.user-dropdown:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.user-avatar {
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-weight: 600;
+  height: 100%;
+  background-color: #f5f7fa;
 }
 
 .rehab-prescription-content {
   flex: 1;
-  padding: 20px;
   overflow-y: auto;
+  padding: 20px;
 }
 
 .content-layout {
   display: flex;
-  height: calc(100vh - 120px);
   gap: 20px;
+  height: 100%;
 }
 
 .patient-info-panel {
   flex: 1;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  padding: 16px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  padding: 20px;
   display: flex;
   flex-direction: column;
 }
 
 .patient-info-panel h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  color: #303133;
-  font-weight: 600;
-  font-size: 16px;
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  font-weight: 500;
 }
 
 .patient-info-placeholder {
@@ -324,30 +202,29 @@ export default {
 }
 
 .panel-footer {
+  margin-top: 20px;
   display: flex;
   justify-content: center;
-  padding: 16px 0;
 }
 
 .prescription-panel {
   flex: 2;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
-  padding: 16px;
 }
 
 .prescription-content {
   flex: 1;
-  display: flex;
-  flex-direction: column;
   overflow-y: auto;
+  margin-bottom: 20px;
 }
 
 .prescription-placeholder {
-  flex: 1;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -355,33 +232,33 @@ export default {
 
 .empty-icon {
   font-size: 48px;
-  margin-bottom: 12px;
-  color: #909399;
-}
-
-.prescription-result {
-  padding: 16px;
+  color: #c0c4cc;
 }
 
 .prescription-result h3 {
-  color: #303133;
-  margin-top: 0;
-  margin-bottom: 16px;
-  font-weight: 600;
+  margin: 0 0 15px 0;
   font-size: 18px;
+  font-weight: 500;
+  text-align: center;
 }
 
 .prescription-text {
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  padding: 20px;
   white-space: pre-line;
-  line-height: 1.6;
+  line-height: 1.8;
 }
 
 .action-buttons {
   display: flex;
-  gap: 12px;
   justify-content: center;
-  padding: 20px 0 8px;
-  border-top: 1px solid #f0f0f0;
-  margin-top: 16px;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .content-layout {
+    flex-direction: column;
+  }
 }
 </style> 
