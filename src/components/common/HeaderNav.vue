@@ -102,7 +102,7 @@ export default {
               type: 'warning',
             }
           )
-          await userStore.logout()
+          await userStore.logoutAction()
           router.push('/login')
         } catch (error) {
           // 用户取消了确认对话框
