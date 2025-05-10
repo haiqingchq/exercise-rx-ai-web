@@ -45,6 +45,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../store/user'
+import { usePatientStore } from '../store/patient'
 import BasicInfoTab from '../components/patient/BasicInfoTab.vue'
 import MedicalHistoryTab from '../components/patient/MedicalHistoryTab.vue'
 import LabReportsTab from '../components/patient/LabReportsTab.vue'
@@ -69,21 +70,46 @@ export default {
   setup() {
     const router = useRouter()
     const userStore = useUserStore()
+    const patientStore = usePatientStore()
     
     const activeTab = ref('basic')
     const userInfo = computed(() => userStore.userInfo)
+    const patientId = computed(() => patientStore.patientId)
+    const patientInfo = computed(() => patientStore.patientInfo)
     
     const goToRehabPrescription = () => {
       router.push('/rehab-prescription')
     }
     
+    const fetchPatientInfo = async () => {
+      try {
+        // 先获取用户信息（确保有最新的用户信息）
+        await userStore.fetchUserInfo()
+        
+        // 如果已经有用户ID，则获取患者信息
+        if (userStore.userInfo?.id) {
+          await patientStore.fetchPatientInfoByUserId(userStore.userInfo.id)
+          
+          if (!patientStore.patientId) {
+            console.error('未获取到患者ID')
+          }
+        } else {
+          console.error('未获取到用户ID')
+        }
+      } catch (error) {
+        console.error('获取患者信息失败:', error)
+      }
+    }
+    
     onMounted(async () => {
-      await userStore.fetchUserInfo()
+      await fetchPatientInfo()
     })
     
     return {
       activeTab,
       userInfo,
+      patientId,
+      patientInfo,
       goToRehabPrescription
     }
   }

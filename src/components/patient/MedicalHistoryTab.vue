@@ -200,13 +200,17 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { usePatientStore } from '../../store/patient'
+// 暂时注释未使用的API导入，等实际使用时再取消注释
+// import { getPatientMedicalRecords, createMedicalRecord, updateMedicalRecord, deleteMedicalRecord } from '../../api/patient'
 
 export default {
   name: 'MedicalHistoryTab',
   
   setup() {
+    const patientStore = usePatientStore()
     const loading = ref(true)
     const historyList = ref([])
     const dialogVisible = ref(false)
@@ -217,6 +221,9 @@ export default {
     const currentHistoryIndex = ref(-1)
     const uploadLoading = ref(false)
     const fileList = ref([])
+    
+    // 使用计算属性获取患者ID
+    const patientId = computed(() => patientStore.patientId)
     
     const formRef = ref(null)
     const formData = reactive({
@@ -258,43 +265,61 @@ export default {
     }
     
     // 获取病史记录列表
-    const fetchHistoryList = () => {
-      loading.value = true
-      // 模拟API调用
-      setTimeout(() => {
-        historyList.value = [
-          {
-            diseaseName: '高血压',
-            diagnosisDate: '2022-03-15',
-            diagnosisType: '确诊',
-            hospital: '北京协和医院',
-            doctor: '王医生',
-            treatmentStatus: '长期治疗',
-            symptoms: '头晕、头痛、耳鸣，血压持续偏高，收缩压在150mmHg以上',
-            treatment: '生活方式干预+药物治疗，控制盐分摄入，增加运动，配合药物治疗',
-            medication: '缬沙坦胶囊 80mg，每日1次，晨起服用',
-            notes: '需要定期测量血压并记录',
-            attachments: [
-              { name: '血压检测报告.pdf', uploadTime: '2022-03-16', size: '2.5MB' },
-              { name: '心电图检查.jpg', uploadTime: '2022-03-16', size: '1.8MB' }
-            ]
-          },
-          {
-            diseaseName: '糖尿病',
-            diagnosisDate: '2021-05-20',
-            diagnosisType: '确诊',
-            hospital: '北京301医院',
-            doctor: '李医生',
-            treatmentStatus: '长期治疗',
-            symptoms: '多饮、多尿、多食、消瘦，空腹血糖偏高',
-            treatment: '饮食控制+药物治疗，控制碳水化合物摄入，定期监测血糖',
-            medication: '二甲双胍片 0.5g，每日3次，饭后服用',
-            notes: '需要定期监测血糖水平，控制饮食',
-            attachments: []
-          }
-        ]
+    const fetchHistoryList = async () => {
+      if (!patientId.value) {
+        console.error('未获取到患者ID，无法获取病史记录')
         loading.value = false
-      }, 1000)
+        return
+      }
+      
+      loading.value = true
+      try {
+        // 这里应该替换为实际API调用
+        // const response = await getPatientMedicalRecords(patientId.value)
+        // if (response.code === 200) {
+        //   historyList.value = response.data
+        // }
+        
+        // 模拟API调用（暂时保留模拟数据，待实际API接入后替换）
+        setTimeout(() => {
+          historyList.value = [
+            {
+              diseaseName: '高血压',
+              diagnosisDate: '2022-03-15',
+              diagnosisType: '确诊',
+              hospital: '北京协和医院',
+              doctor: '王医生',
+              treatmentStatus: '长期治疗',
+              symptoms: '头晕、头痛、耳鸣，血压持续偏高，收缩压在150mmHg以上',
+              treatment: '生活方式干预+药物治疗，控制盐分摄入，增加运动，配合药物治疗',
+              medication: '缬沙坦胶囊 80mg，每日1次，晨起服用',
+              notes: '需要定期测量血压并记录',
+              attachments: [
+                { name: '血压检测报告.pdf', uploadTime: '2022-03-16', size: '2.5MB' },
+                { name: '心电图检查.jpg', uploadTime: '2022-03-16', size: '1.8MB' }
+              ]
+            },
+            {
+              diseaseName: '糖尿病',
+              diagnosisDate: '2021-05-20',
+              diagnosisType: '确诊',
+              hospital: '北京301医院',
+              doctor: '李医生',
+              treatmentStatus: '长期治疗',
+              symptoms: '多饮、多尿、多食、消瘦，空腹血糖偏高',
+              treatment: '饮食控制+药物治疗，控制碳水化合物摄入，定期监测血糖',
+              medication: '二甲双胍片 0.5g，每日3次，饭后服用',
+              notes: '需要定期监测血糖水平，控制饮食',
+              attachments: []
+            }
+          ]
+          loading.value = false
+        }, 1000)
+      } catch (error) {
+        console.error('获取病史记录失败:', error)
+        ElMessage.error('获取病史记录失败')
+        loading.value = false
+      }
     }
     
     // 打开添加对话框
@@ -336,9 +361,35 @@ export default {
       
       await formRef.value.validate(async (valid) => {
         if (valid) {
+          if (!patientId.value) {
+            ElMessage.error('未获取到患者ID，无法保存病史记录')
+            return
+          }
+          
           submitLoading.value = true
           
           try {
+            // 这里应该替换为实际API调用
+            // const data = {
+            //   patient_id: patientId.value,
+            //   disease_name: formData.diseaseName,
+            //   diagnosis_date: formData.diagnosisDate,
+            //   diagnosis_type: formData.diagnosisType,
+            //   hospital: formData.hospital,
+            //   doctor: formData.doctor,
+            //   treatment_status: formData.treatmentStatus,
+            //   symptoms: formData.symptoms,
+            //   treatment: formData.treatment,
+            //   medication: formData.medication,
+            //   notes: formData.notes
+            // }
+            
+            // if (isEdit.value) {
+            //   await updateMedicalRecord(historyList.value[editIndex.value].id, data)
+            // } else {
+            //   await createMedicalRecord(data)
+            // }
+            
             // 模拟API调用
             setTimeout(() => {
               if (isEdit.value) {
@@ -413,7 +464,20 @@ export default {
     }
     
     onMounted(() => {
-      fetchHistoryList()
+      if (patientId.value) {
+        fetchHistoryList()
+      } else {
+        // 如果患者ID不存在，则等待患者store加载完成
+        const unwatch = watch(
+          () => patientId.value,
+          (newVal) => {
+            if (newVal) {
+              fetchHistoryList()
+              unwatch() // 获取到ID后取消监听
+            }
+          }
+        )
+      }
     })
     
     return {

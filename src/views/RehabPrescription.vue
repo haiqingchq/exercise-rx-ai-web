@@ -11,9 +11,27 @@
         <!-- 左侧患者信息面板 (占页面1/3宽度) -->
         <div class="patient-info-panel">
           <h3>患者聚合信息</h3>
-          <div class="patient-info-placeholder">
-            <el-empty description="暂无患者信息" />
-          </div>
+          
+          <template v-if="patientInfo">
+            <div class="patient-info-content">
+              <el-descriptions :column="1" border>
+                <el-descriptions-item label="姓名">{{ patientInfo.name || '未填写' }}</el-descriptions-item>
+                <el-descriptions-item label="性别">{{ patientInfo.gender || '未填写' }}</el-descriptions-item>
+                <el-descriptions-item label="年龄">{{ calculateAge(patientInfo.birth_date) || '未填写' }}</el-descriptions-item>
+                <el-descriptions-item label="联系电话">{{ patientInfo.phone || '未填写' }}</el-descriptions-item>
+                <el-descriptions-item label="主要症状">待聚合</el-descriptions-item>
+                <el-descriptions-item label="既往病史">待聚合</el-descriptions-item>
+                <el-descriptions-item label="体检结果">待聚合</el-descriptions-item>
+              </el-descriptions>
+            </div>
+          </template>
+          
+          <template v-else>
+            <div class="patient-info-placeholder">
+              <el-empty description="暂无患者信息" />
+            </div>
+          </template>
+          
           <div class="panel-footer">
             <el-button 
               type="primary" 
@@ -72,6 +90,7 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '../store/user'
+import { usePatientStore } from '../store/patient'
 import { ElMessage } from 'element-plus'
 import HeaderNav from '../components/common/HeaderNav.vue'
 
@@ -84,13 +103,56 @@ export default {
   
   setup() {
     const userStore = useUserStore()
+    const patientStore = usePatientStore()
     
     const userInfo = computed(() => userStore.userInfo)
+    const patientId = computed(() => patientStore.patientId)
+    const patientInfo = computed(() => patientStore.patientInfo)
     const loading = ref(false)
     const aggregating = ref(false)
     const prescriptionContent = ref('')
     
+    // 根据出生日期计算年龄
+    const calculateAge = (birthDate) => {
+      if (!birthDate) return null
+      const today = new Date()
+      const birthDay = new Date(birthDate)
+      let age = today.getFullYear() - birthDay.getFullYear()
+      const monthDiff = today.getMonth() - birthDay.getMonth()
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDay.getDate())) {
+        age--
+      }
+      
+      return age
+    }
+    
+    const fetchPatientInfo = async () => {
+      try {
+        // 先获取用户信息（确保有最新的用户信息）
+        await userStore.fetchUserInfo()
+        
+        // 如果已经有用户ID，则获取患者信息
+        if (userStore.userInfo?.id) {
+          await patientStore.fetchPatientInfoByUserId(userStore.userInfo.id)
+          
+          if (!patientStore.patientId) {
+            console.error('未获取到患者ID')
+          }
+        } else {
+          console.error('未获取到用户ID')
+        }
+      } catch (error) {
+        console.error('获取患者信息失败:', error)
+      }
+    }
+    
     const aggregatePatientInfo = async () => {
+      if (!patientId.value) {
+        ElMessage.warning('未获取到患者信息，请先获取患者信息')
+        return
+      }
+      
       aggregating.value = true
       
       try {
@@ -106,10 +168,17 @@ export default {
     }
     
     const generatePrescription = async () => {
+      if (!patientId.value) {
+        ElMessage.warning('未获取到患者信息，无法生成处方')
+        return
+      }
+      
       loading.value = true
       
       try {
-        // 这里应该调用API生成处方
+        // 这里应该调用API生成处方，传入患者ID
+        // const response = await generatePatientPrescription(patientId.value)
+        
         // 模拟API调用
         await new Promise(resolve => setTimeout(resolve, 2000))
         
@@ -142,14 +211,17 @@ export default {
     }
     
     onMounted(async () => {
-      await userStore.fetchUserInfo()
+      await fetchPatientInfo()
     })
     
     return {
       userInfo,
+      patientId,
+      patientInfo,
       loading,
       aggregating,
       prescriptionContent,
+      calculateAge,
       aggregatePatientInfo,
       generatePrescription,
       regeneratePrescription
@@ -194,15 +266,21 @@ export default {
   font-weight: 500;
 }
 
+.patient-info-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 15px;
+}
+
 .patient-info-placeholder {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 15px;
 }
 
 .panel-footer {
-  margin-top: 20px;
   display: flex;
   justify-content: center;
 }
@@ -223,16 +301,8 @@ export default {
   margin-bottom: 20px;
 }
 
-.prescription-placeholder {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.empty-icon {
-  font-size: 48px;
-  color: #c0c4cc;
+.prescription-result {
+  padding: 0 10px;
 }
 
 .prescription-result h3 {
@@ -243,17 +313,28 @@ export default {
 }
 
 .prescription-text {
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  padding: 20px;
   white-space: pre-line;
   line-height: 1.8;
+  font-size: 14px;
+  color: #303133;
+}
+
+.prescription-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 20px;
+  gap: 15px;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: #c0c4cc;
 }
 
 @media (max-width: 768px) {

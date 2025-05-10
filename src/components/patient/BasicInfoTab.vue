@@ -103,18 +103,24 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getPatientByUserId, updatePatient } from '../../api/patient'
-import { useUserStore } from '../../store/user'
+import { updatePatient } from '../../api/patient'
+import { usePatientStore } from '../../store/patient'
 
 export default {
   name: 'BasicInfoTab',
   
   setup() {
-    const userStore = useUserStore()
-    const patientId = ref(null)
+    const patientStore = usePatientStore()
+    const formRef = ref(null)
+    const dialogVisible = ref(false)
+    const loading = ref(false)
     
+    // 使用计算属性获取患者ID
+    const patientId = computed(() => patientStore.patientId)
+    
+    // 定义本地患者信息对象，用于展示
     const patientInfo = ref({
       name: '',
       gender: '',
@@ -131,53 +137,10 @@ export default {
     })
     
     const formData = reactive({...patientInfo.value})
-    const formRef = ref(null)
-    const dialogVisible = ref(false)
-    const loading = ref(false)
     
     const rules = {
       name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
       phone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码', trigger: 'blur' }]
-    }
-    
-    // 获取患者基本信息
-    const fetchPatientInfo = async () => {
-      try {
-        loading.value = true
-        // 使用当前登录用户的ID获取患者信息
-        const userId = userStore.userInfo?.id
-        if (!userId) {
-          ElMessage.warning('未获取到用户信息，请重新登录')
-          return
-        }
-        
-        const response = await getPatientByUserId(userId)
-        if (response.code === 200 && response.data) {
-          patientId.value = response.data.id
-          // 将API返回的数据映射到组件的数据模型
-          patientInfo.value = {
-            name: response.data.name || '',
-            gender: response.data.gender || '',
-            age: calculateAge(response.data.birth_date) || '',
-            birthDate: response.data.birth_date || '',
-            idCard: response.data.id_card || '',
-            bloodType: response.data.blood_type || '',
-            maritalStatus: response.data.marital_status || '',
-            occupation: response.data.occupation || '',
-            phone: response.data.phone || '',
-            emergencyContact: response.data.emergency_contact || '',
-            emergencyPhone: response.data.emergency_phone || '',
-            address: response.data.address || ''
-          }
-        } else {
-          ElMessage.warning('未找到患者信息')
-        }
-      } catch (error) {
-        console.error('获取患者基本信息失败:', error)
-        ElMessage.error('获取患者信息失败')
-      } finally {
-        loading.value = false
-      }
     }
     
     // 根据出生日期计算年龄
@@ -194,6 +157,37 @@ export default {
       
       return age
     }
+    
+    // 更新本地患者信息
+    const updateLocalPatientInfo = (storePatientInfo) => {
+      if (!storePatientInfo) return
+      
+      patientInfo.value = {
+        name: storePatientInfo.name || '',
+        gender: storePatientInfo.gender || '',
+        age: calculateAge(storePatientInfo.birth_date) || '',
+        birthDate: storePatientInfo.birth_date || '',
+        idCard: storePatientInfo.id_card || '',
+        bloodType: storePatientInfo.blood_type || '',
+        maritalStatus: storePatientInfo.marital_status || '',
+        occupation: storePatientInfo.occupation || '',
+        phone: storePatientInfo.phone || '',
+        emergencyContact: storePatientInfo.emergency_contact || '',
+        emergencyPhone: storePatientInfo.emergency_phone || '',
+        address: storePatientInfo.address || ''
+      }
+    }
+    
+    // 监听store中的患者信息变化
+    watch(
+      () => patientStore.patientInfo,
+      (newPatientInfo) => {
+        if (newPatientInfo) {
+          updateLocalPatientInfo(newPatientInfo)
+        }
+      },
+      { immediate: true }
+    )
     
     // 打开编辑对话框
     const openEditDialog = () => {
@@ -234,7 +228,9 @@ export default {
             const response = await updatePatient(patientId.value, patientData)
             
             if (response.code === 200) {
-              // 更新成功后更新页面显示的数据
+              // 更新成功后，更新store中的患者信息
+              await patientStore.fetchPatientInfoByUserId(patientStore.patientInfo.user_id)
+              // 更新页面显示的数据
               Object.assign(patientInfo.value, formData)
               dialogVisible.value = false
               ElMessage.success('保存成功')
@@ -250,10 +246,6 @@ export default {
         }
       })
     }
-    
-    onMounted(() => {
-      fetchPatientInfo()
-    })
     
     return {
       patientInfo,
@@ -271,7 +263,7 @@ export default {
 
 <style scoped>
 .basic-info-tab {
-  padding: 16px 0;
+  padding: 10px;
 }
 
 .tab-header {
@@ -284,20 +276,18 @@ export default {
 .tab-header h3 {
   margin: 0;
   font-size: 18px;
-  font-weight: 600;
-  color: #303133;
+  font-weight: 500;
 }
 
 .info-card {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
-.descriptions :deep(.el-descriptions__label) {
-  width: 120px;
+.descriptions {
+  width: 100%;
 }
 
-.descriptions :deep(.el-descriptions__content) {
-  padding: 12px 16px;
-  line-height: 1.6;
+.edit-btn {
+  margin-left: 10px;
 }
 </style> 
