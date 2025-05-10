@@ -203,8 +203,7 @@
 import { ref, reactive, onMounted, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { usePatientStore } from '../../store/patient'
-// 暂时注释未使用的API导入，等实际使用时再取消注释
-// import { getPatientMedicalRecords, createMedicalRecord, updateMedicalRecord, deleteMedicalRecord } from '../../api/patient'
+import { getPatientMedicalRecords, createMedicalRecord, updateMedicalRecord, deleteMedicalRecord } from '../../api/patient'
 
 export default {
   name: 'MedicalHistoryTab',
@@ -248,6 +247,56 @@ export default {
       symptoms: [{ required: true, message: '请描述症状', trigger: 'blur' }]
     }
     
+    // 枚举值映射 - 诊断类型
+    const diagnosisTypeMap = {
+      '初诊': 'initial',
+      '确诊': 'definite',
+      '疑似': 'suspected',
+      '鉴别诊断': 'differential',
+      '并发症': 'complication',
+      // 反向映射
+      'initial': '初诊',
+      'definite': '确诊',
+      'suspected': '疑似',
+      'differential': '鉴别诊断',
+      'complication': '并发症'
+    }
+    
+    // 枚举值映射 - 治疗状态
+    const treatmentStatusMap = {
+      '治疗中': 'ongoing',
+      '已痊愈': 'completed',
+      '暂停治疗': 'suspended',
+      '取消治疗': 'cancelled',
+      '随访': 'follow_up',
+      '未治疗': 'suspended', // 特殊映射
+      '长期治疗': 'ongoing', // 特殊映射
+      // 反向映射
+      'ongoing': '治疗中',
+      'completed': '已痊愈',
+      'suspended': '暂停治疗',
+      'cancelled': '取消治疗',
+      'follow_up': '随访'
+    }
+    
+    // 后端格式转前端显示格式
+    const mapBackendToFrontend = (record) => {
+      return {
+        id: record.id,
+        diseaseName: record.disease_name || '',
+        diagnosisDate: record.diagnosis_date || '',
+        diagnosisType: record.diagnosis_type ? (diagnosisTypeMap[record.diagnosis_type] || record.diagnosis_type) : '',
+        hospital: record.hospital || '',
+        doctor: record.doctor || '',
+        treatmentStatus: record.treatment_status ? (treatmentStatusMap[record.treatment_status] || record.treatment_status) : '',
+        symptoms: record.symptoms || '',
+        treatment: record.treatment || '',
+        medication: record.medication || '',
+        notes: record.notes || '',
+        attachments: record.attachments || []
+      }
+    }
+    
     // 根据治疗状态获取标签类型
     const getTreatmentTagType = (status) => {
       switch (status) {
@@ -259,9 +308,31 @@ export default {
           return 'success'
         case '长期治疗':
           return 'danger'
+        case '暂停治疗':
+          return 'warning'
+        case '取消治疗':
+          return 'info'
+        case '随访':
+          return 'success'
         default:
           return ''
       }
+    }
+    
+    // 格式化日期为YYYY-MM-DD格式
+    const formatDate = (date) => {
+      if (!date) return null
+      
+      if (typeof date === 'string') {
+        // 如果已经是字符串，确保格式为YYYY-MM-DD
+        const dateObj = new Date(date)
+        if (isNaN(dateObj.getTime())) return date // 如果转换失败，返回原始字符串
+        
+        return dateObj.toISOString().split('T')[0]
+      }
+      
+      // 如果是日期对象，转换为YYYY-MM-DD格式
+      return date.toISOString().split('T')[0]
     }
     
     // 获取病史记录列表
@@ -274,50 +345,23 @@ export default {
       
       loading.value = true
       try {
-        // 这里应该替换为实际API调用
-        // const response = await getPatientMedicalRecords(patientId.value)
-        // if (response.code === 200) {
-        //   historyList.value = response.data
-        // }
+        // 调用API获取患者病史记录
+        const response = await getPatientMedicalRecords(patientId.value)
         
-        // 模拟API调用（暂时保留模拟数据，待实际API接入后替换）
-        setTimeout(() => {
-          historyList.value = [
-            {
-              diseaseName: '高血压',
-              diagnosisDate: '2022-03-15',
-              diagnosisType: '确诊',
-              hospital: '北京协和医院',
-              doctor: '王医生',
-              treatmentStatus: '长期治疗',
-              symptoms: '头晕、头痛、耳鸣，血压持续偏高，收缩压在150mmHg以上',
-              treatment: '生活方式干预+药物治疗，控制盐分摄入，增加运动，配合药物治疗',
-              medication: '缬沙坦胶囊 80mg，每日1次，晨起服用',
-              notes: '需要定期测量血压并记录',
-              attachments: [
-                { name: '血压检测报告.pdf', uploadTime: '2022-03-16', size: '2.5MB' },
-                { name: '心电图检查.jpg', uploadTime: '2022-03-16', size: '1.8MB' }
-              ]
-            },
-            {
-              diseaseName: '糖尿病',
-              diagnosisDate: '2021-05-20',
-              diagnosisType: '确诊',
-              hospital: '北京301医院',
-              doctor: '李医生',
-              treatmentStatus: '长期治疗',
-              symptoms: '多饮、多尿、多食、消瘦，空腹血糖偏高',
-              treatment: '饮食控制+药物治疗，控制碳水化合物摄入，定期监测血糖',
-              medication: '二甲双胍片 0.5g，每日3次，饭后服用',
-              notes: '需要定期监测血糖水平，控制饮食',
-              attachments: []
-            }
-          ]
-          loading.value = false
-        }, 1000)
+        if (response.code === 200) {
+          // 如果API调用成功，将返回的数据映射到前端模型
+          historyList.value = response.data.map(record => mapBackendToFrontend(record))
+        } else {
+          // 如果API调用失败，显示错误信息
+          ElMessage.error(response.message || '获取病史记录失败')
+          // 使用空数组初始化列表
+          historyList.value = []
+        }
       } catch (error) {
         console.error('获取病史记录失败:', error)
         ElMessage.error('获取病史记录失败')
+        historyList.value = []
+      } finally {
         loading.value = false
       }
     }
@@ -350,9 +394,29 @@ export default {
     }
     
     // 删除病史
-    const deleteHistory = (index) => {
-      historyList.value.splice(index, 1)
-      ElMessage.success('删除成功')
+    const deleteHistory = async (index) => {
+      try {
+        const recordId = historyList.value[index].id
+        
+        if (!recordId) {
+          ElMessage.error('无法删除，未找到记录ID')
+          return
+        }
+        
+        // 调用API删除病史记录
+        const response = await deleteMedicalRecord(recordId)
+        
+        if (response.code === 200) {
+          // 如果删除成功，更新本地列表
+          historyList.value.splice(index, 1)
+          ElMessage.success('删除成功')
+        } else {
+          ElMessage.error(response.message || '删除失败')
+        }
+      } catch (error) {
+        console.error('删除病史记录失败:', error)
+        ElMessage.error('删除失败，请重试')
+      }
     }
     
     // 提交表单
@@ -369,45 +433,88 @@ export default {
           submitLoading.value = true
           
           try {
-            // 这里应该替换为实际API调用
-            // const data = {
-            //   patient_id: patientId.value,
-            //   disease_name: formData.diseaseName,
-            //   diagnosis_date: formData.diagnosisDate,
-            //   diagnosis_type: formData.diagnosisType,
-            //   hospital: formData.hospital,
-            //   doctor: formData.doctor,
-            //   treatment_status: formData.treatmentStatus,
-            //   symptoms: formData.symptoms,
-            //   treatment: formData.treatment,
-            //   medication: formData.medication,
-            //   notes: formData.notes
-            // }
+            // 准备提交到API的数据，对枚举值和日期进行转换
+            const data = {
+              patient_id: patientId.value,
+              disease_name: formData.diseaseName,
+              diagnosis_date: formatDate(formData.diagnosisDate), // 格式化日期
+              diagnosis_type: diagnosisTypeMap[formData.diagnosisType] || 'initial', // 转换诊断类型枚举值
+              hospital: formData.hospital,
+              doctor: formData.doctor,
+              treatment_status: treatmentStatusMap[formData.treatmentStatus] || 'ongoing', // 转换治疗状态枚举值
+              symptoms: formData.symptoms,
+              treatment: formData.treatment,
+              medication: formData.medication,
+              notes: formData.notes
+            }
             
-            // if (isEdit.value) {
-            //   await updateMedicalRecord(historyList.value[editIndex.value].id, data)
-            // } else {
-            //   await createMedicalRecord(data)
-            // }
+            console.log('提交数据:', data)
             
-            // 模拟API调用
-            setTimeout(() => {
+            let response
+            
+            if (isEdit.value) {
+              // 编辑现有记录
+              const recordId = historyList.value[editIndex.value].id
+              if (!recordId) {
+                ElMessage.error('编辑失败，未找到记录ID')
+                submitLoading.value = false
+                return
+              }
+              
+              response = await updateMedicalRecord(recordId, data)
+            } else {
+              // 添加新记录
+              response = await createMedicalRecord(data)
+            }
+            
+            if (response.code === 200) {
               if (isEdit.value) {
-                // 编辑现有记录
-                historyList.value[editIndex.value] = { ...formData }
+                // 更新本地记录
+                const updatedRecord = {
+                  ...historyList.value[editIndex.value],
+                  diseaseName: formData.diseaseName,
+                  diagnosisDate: formData.diagnosisDate,
+                  diagnosisType: formData.diagnosisType,
+                  hospital: formData.hospital,
+                  doctor: formData.doctor,
+                  treatmentStatus: formData.treatmentStatus,
+                  symptoms: formData.symptoms,
+                  treatment: formData.treatment,
+                  medication: formData.medication,
+                  notes: formData.notes
+                }
+                
+                historyList.value[editIndex.value] = updatedRecord
                 ElMessage.success('更新成功')
               } else {
-                // 添加新记录
-                historyList.value.push({ ...formData, attachments: [] })
+                // 添加新记录到本地列表
+                const newRecord = {
+                  id: response.data.id,
+                  diseaseName: formData.diseaseName,
+                  diagnosisDate: formData.diagnosisDate,
+                  diagnosisType: formData.diagnosisType,
+                  hospital: formData.hospital,
+                  doctor: formData.doctor,
+                  treatmentStatus: formData.treatmentStatus,
+                  symptoms: formData.symptoms,
+                  treatment: formData.treatment,
+                  medication: formData.medication,
+                  notes: formData.notes,
+                  attachments: []
+                }
+                
+                historyList.value.push(newRecord)
                 ElMessage.success('添加成功')
               }
               
               dialogVisible.value = false
-              submitLoading.value = false
-            }, 1000)
+            } else {
+              ElMessage.error(response.message || '保存失败')
+            }
           } catch (error) {
             console.error('保存病史记录失败:', error)
             ElMessage.error('操作失败，请重试')
+          } finally {
             submitLoading.value = false
           }
         }
@@ -427,7 +534,7 @@ export default {
     }
     
     // 提交上传
-    const submitUpload = () => {
+    const submitUpload = async () => {
       if (fileList.value.length === 0) {
         ElMessage.warning('请选择要上传的文件')
         return
@@ -435,8 +542,28 @@ export default {
       
       uploadLoading.value = true
       
-      // 模拟上传过程
-      setTimeout(() => {
+      try {
+        // 获取当前操作的记录ID
+        const recordId = historyList.value[currentHistoryIndex.value].id
+        
+        if (!recordId) {
+          ElMessage.error('上传失败，未找到记录ID')
+          uploadLoading.value = false
+          return
+        }
+        
+        // 这里应该实现文件上传逻辑
+        // 例如:
+        // const formData = new FormData()
+        // fileList.value.forEach(file => {
+        //   formData.append('files', file.raw)
+        // })
+        // formData.append('record_id', recordId)
+        // const response = await uploadMedicalRecordAttachments(formData)
+        
+        // 模拟上传成功
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
         // 添加附件到对应的病史记录
         if (!historyList.value[currentHistoryIndex.value].attachments) {
           historyList.value[currentHistoryIndex.value].attachments = []
@@ -450,17 +577,43 @@ export default {
           })
         })
         
-        uploadLoading.value = false
-        uploadDialogVisible.value = false
         ElMessage.success('上传成功')
+        uploadDialogVisible.value = false
         fileList.value = []
-      }, 1500)
+      } catch (error) {
+        console.error('上传文件失败:', error)
+        ElMessage.error('上传失败，请重试')
+      } finally {
+        uploadLoading.value = false
+      }
     }
     
     // 删除附件
-    const deleteAttachment = (historyIndex, attachmentIndex) => {
-      historyList.value[historyIndex].attachments.splice(attachmentIndex, 1)
-      ElMessage.success('删除成功')
+    const deleteAttachment = async (historyIndex, attachmentIndex) => {
+      try {
+        // 获取当前操作的记录ID和附件信息
+        const recordId = historyList.value[historyIndex].id
+        const attachment = historyList.value[historyIndex].attachments[attachmentIndex]
+        
+        if (!recordId || !attachment) {
+          ElMessage.error('删除失败，未找到记录或附件信息')
+          return
+        }
+        
+        // 这里应该实现附件删除逻辑
+        // 例如:
+        // const response = await deleteMedicalRecordAttachment(recordId, attachment.id)
+        
+        // 模拟删除成功
+        await new Promise(resolve => setTimeout(resolve, 500))
+        
+        // 从本地列表中删除附件
+        historyList.value[historyIndex].attachments.splice(attachmentIndex, 1)
+        ElMessage.success('删除成功')
+      } catch (error) {
+        console.error('删除附件失败:', error)
+        ElMessage.error('删除失败，请重试')
+      }
     }
     
     onMounted(() => {
